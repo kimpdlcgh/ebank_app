@@ -4,36 +4,24 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
-// Validate required environment variables
-const requiredEnvVars = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+// Firebase configuration with fallback values for production
+const firebaseConfigValues = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCbAQrQEyETkBw_1nMlDwEnkn4jqt1uPpo",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "e-bank-dashboard.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "e-bank-dashboard",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "e-bank-dashboard.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "186587489295",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:186587489295:web:c63b39b5216981bf89ef7a",
 };
-
-// Check for missing required environment variables
-const missingVars = Object.entries(requiredEnvVars)
-  .filter(([key, value]) => !value)
-  .map(([key]) => `VITE_FIREBASE_${key.toUpperCase().replace(/([A-Z])/g, '_$1')}`);
-
-if (missingVars.length > 0) {
-  throw new Error(
-    `Missing required Firebase environment variables: ${missingVars.join(', ')}\n` +
-    'Please check your .env file and ensure all Firebase configuration variables are set.'
-  );
-}
 
 // Firebase configuration - production ready
 const firebaseConfig = {
-  apiKey: requiredEnvVars.apiKey,
-  authDomain: requiredEnvVars.authDomain,
-  projectId: requiredEnvVars.projectId,
-  storageBucket: requiredEnvVars.storageBucket,
-  messagingSenderId: requiredEnvVars.messagingSenderId,
-  appId: requiredEnvVars.appId,
+  apiKey: firebaseConfigValues.apiKey,
+  authDomain: firebaseConfigValues.authDomain,
+  projectId: firebaseConfigValues.projectId,
+  storageBucket: firebaseConfigValues.storageBucket,
+  messagingSenderId: firebaseConfigValues.messagingSenderId,
+  appId: firebaseConfigValues.appId,
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, // Optional
 };
 
