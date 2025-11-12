@@ -5,7 +5,6 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   ArrowDownLeft, 
-  DollarSign, 
   Eye, 
   EyeOff,
   Plus,
@@ -22,9 +21,17 @@ import {
   X,
   ChevronRight,
   Shield,
-  PieChart,
   FileText,
-  HelpCircle
+  HelpCircle,
+  Star,
+  Zap,
+  Lock,
+  Globe,
+  Smartphone,
+  CreditCard as CardIcon,
+  ArrowRight,
+  BarChart3,
+  Sparkles
 } from 'lucide-react';
 import LogoDisplay from '../../components/ui/LogoDisplay';
 import SecuritySettings from '../../components/modals/SecuritySettings';
@@ -457,122 +464,206 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
-            {/* Account Cards */}
+            {/* Account Cards - Enhanced Modern Design */}
             {isLoadingAccounts ? (
-              <div className="bg-white rounded-xl p-8 border-2 border-dashed border-gray-200 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading your accounts...</p>
+              <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-200 text-center shadow-sm">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-100 border-t-blue-600 mx-auto mb-4"></div>
+                  <div className="absolute inset-0 rounded-full bg-blue-50 opacity-20 animate-pulse"></div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Accounts</h3>
+                <p className="text-gray-600">Fetching your latest account information...</p>
               </div>
             ) : accounts.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 border-2 border-dashed border-gray-200 text-center">
-                <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Accounts Available</h3>
-                <p className="text-gray-500 mb-4">Contact support to open your first bank account.</p>
-                <button 
-                  onClick={() => setIsContactModalOpen(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Contact Support
-                </button>
+              <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 rounded-2xl p-8 border-2 border-dashed border-blue-200 text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -translate-y-16 translate-x-16 opacity-20"></div>
+                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-100 rounded-full translate-y-12 -translate-x-12 opacity-30"></div>
+                <div className="relative z-10">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <CreditCard className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Welcome to Banking</h3>
+                  <p className="text-gray-600 mb-6 max-w-sm mx-auto">Get started by opening your first account. Our team will help you choose the perfect account type.</p>
+                  <button 
+                    onClick={() => setIsContactModalOpen(true)}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold"
+                  >
+                    Open Your First Account
+                  </button>
+                </div>
               </div>
             ) : (
               accounts.map((account: any) => (
               <div
                 key={account.id}
-                className={`bg-white rounded-xl p-6 border-2 transition-all cursor-pointer hover:shadow-lg ${
+                className={`group relative bg-white rounded-2xl p-6 transition-all duration-300 cursor-pointer transform hover:scale-[1.02] ${
                   selectedAccount?.id === account.id
-                    ? 'border-blue-500 shadow-lg'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'ring-2 ring-blue-500 shadow-xl shadow-blue-500/20 border-0'
+                    : 'border border-gray-200 hover:border-blue-300 hover:shadow-xl'
                 }`}
                 onClick={() => setSelectedAccount(account)}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <CreditCard className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-900 capitalize truncate">
-                        {account.accountName || `${account.accountType || account.type} Account`}
-                      </p>
-                      <div className="flex items-center space-x-2">
-                        <p className="text-sm text-gray-500 truncate">
-                          {balanceVisible ? account.accountNumber : `****${account.accountNumber?.slice(-4) || '****'}`}
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setBalanceVisible(!balanceVisible);
-                          }}
-                          className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0"
-                        >
-                          {balanceVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        </button>
+                {/* Gradient Background Overlay */}
+                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${
+                  account.accountType === 'savings' 
+                    ? 'from-emerald-50 to-teal-50' 
+                    : account.accountType === 'checking'
+                    ? 'from-blue-50 to-indigo-50'
+                    : 'from-purple-50 to-pink-50'
+                } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                
+                {/* Content */}
+                <div className="relative z-10">
+                  {/* Header Section */}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
+                    <div className="flex items-center space-x-4 min-w-0 flex-1">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${
+                        account.accountType === 'savings' 
+                          ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
+                          : account.accountType === 'checking'
+                          ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                          : 'bg-gradient-to-br from-purple-500 to-pink-600'
+                      }`}>
+                        <CreditCard className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <h3 className="font-bold text-gray-900 capitalize truncate text-lg">
+                            {account.accountName || `${account.accountType || account.type} Account`}
+                          </h3>
+                          {account.primary && (
+                            <div className="flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                              <Star className="w-3 h-3 mr-1" />
+                              Primary
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <p className="text-sm text-gray-600 font-mono">
+                            {balanceVisible ? account.accountNumber : `••••-••••-••••-${account.accountNumber?.slice(-4) || '••••'}`}
+                          </p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBalanceVisible(!balanceVisible);
+                            }}
+                            className="text-gray-400 hover:text-gray-600 p-1 hover:bg-gray-100 rounded-md transition-all"
+                          >
+                            {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  {account.primary && (
-                    <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 self-start sm:self-center">
-                      Primary
-                    </span>
-                  )}
-                </div>
-                
-                {/* Account Balance */}
-                <div className="mb-4">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {balanceVisible ? formatCurrency(account.balance || 0) : '••••••••'}
-                  </p>
-                  <p className="text-sm text-gray-500">Available Balance</p>
-                </div>
-                
-                {/* Account Details */}
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Account Type</p>
-                      <p className="font-medium capitalize">{account.accountType || account.type}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Status</p>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        account.status === 'active' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-red-100 text-red-700'
+                  
+                  {/* Balance Section */}
+                  <div className="mb-6">
+                    <div className="flex items-baseline space-x-2 mb-1">
+                      <p className="text-3xl font-bold text-gray-900">
+                        {balanceVisible ? formatCurrency(account.balance || 0) : '••••••••'}
+                      </p>
+                      <div className={`flex items-center text-sm font-medium ${
+                        account.balance > 0 ? 'text-emerald-600' : 'text-gray-500'
                       }`}>
-                        {account.status || 'Active'}
-                      </span>
+                        <TrendingUp className="w-4 h-4 mr-1" />
+                        <span>Available</span>
+                      </div>
                     </div>
+                    <p className="text-gray-500">Current Balance</p>
                   </div>
                   
-                  {account.routingNumber && (
-                    <div>
-                      <p className="text-gray-500 text-sm">Routing Number</p>
-                      <p className="font-medium text-sm">
-                        {balanceVisible ? account.routingNumber : '•••••••••'}
-                      </p>
+                  {/* Account Status & Type */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
+                        account.status === 'active' 
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                          : 'bg-red-100 text-red-700 border border-red-200'
+                      }`}>
+                        <div className={`w-2 h-2 rounded-full mr-2 ${
+                          account.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'
+                        }`}></div>
+                        {account.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
-                  )}
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500">Account Type</p>
+                      <p className="font-bold text-gray-900 capitalize">{account.accountType || account.type}</p>
+                    </div>
+                  </div>
                   
                   {/* Account Features */}
                   {account.features && Object.keys(account.features).length > 0 && (
-                    <div>
-                      <p className="text-gray-500 text-sm mb-2">Account Features</p>
-                      <div className="flex flex-wrap gap-1">
-                        {Object.entries(account.features).map(([feature, enabled]) => 
-                          enabled ? (
-                            <span 
-                              key={feature}
-                              className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full"
-                            >
-                              {feature.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                            </span>
-                          ) : null
-                        )}
+                    <div className="mb-4">
+                      <p className="text-sm font-medium text-gray-700 mb-3">Active Features</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(account.features)
+                          .filter(([, enabled]) => enabled)
+                          .slice(0, 4)
+                          .map(([feature]) => {
+                            const featureName = feature.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                            const getFeatureIcon = (f: string) => {
+                              if (f.includes('online')) return <Globe className="w-4 h-4" />;
+                              if (f.includes('mobile')) return <Smartphone className="w-4 h-4" />;
+                              if (f.includes('card')) return <CardIcon className="w-4 h-4" />;
+                              if (f.includes('transfer')) return <Send className="w-4 h-4" />;
+                              return <Zap className="w-4 h-4" />;
+                            };
+                            
+                            return (
+                              <div 
+                                key={feature}
+                                className="flex items-center space-x-2 bg-white bg-opacity-80 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                              >
+                                <div className="text-blue-600">
+                                  {getFeatureIcon(feature)}
+                                </div>
+                                <span className="text-gray-700 font-medium truncate">
+                                  {featureName}
+                                </span>
+                              </div>
+                            );
+                          })
+                        }
+                      </div>
+                      {Object.entries(account.features).filter(([, enabled]) => enabled).length > 4 && (
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                          +{Object.entries(account.features).filter(([, enabled]) => enabled).length - 4} more features
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Routing Number */}
+                  {account.routingNumber && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-gray-500">Routing Number</p>
+                          <p className="font-mono text-sm font-medium text-gray-900">
+                            {balanceVisible ? account.routingNumber : '•••••••••'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">Opened</p>
+                          <p className="text-sm font-medium text-gray-700">
+                            {account.createdAt ? 
+                              new Date(account.createdAt.toDate ? account.createdAt.toDate() : account.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+                              : 'N/A'
+                            }
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
+                
+                {/* Selection Indicator */}
+                {selectedAccount?.id === account.id && (
+                  <div className="absolute top-4 right-4 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                )}
               </div>
               ))
             )}
@@ -580,37 +671,65 @@ const Dashboard: React.FC = () => {
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Recent Transactions */}
+            {/* Recent Transactions - Enhanced */}
             <div className="xl:col-span-2">
-              <div className="bg-white rounded-xl border p-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <History className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
+                      <p className="text-sm text-gray-500">Your latest transactions</p>
+                    </div>
+                  </div>
                   <Link
                     to="/transactions"
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    className="group flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-all duration-200 font-semibold"
                   >
-                    View All
-                    <ChevronRight className="w-4 h-4 ml-1" />
+                    <span>View All</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {mockTransactions.length === 0 ? (
-                    <div className="text-center py-8">
-                      <History className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No recent transactions</p>
+                    <div className="text-center py-12 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-purple-50 rounded-2xl"></div>
+                      <div className="relative z-10">
+                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                          <History className="w-10 h-10 text-gray-400" />
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-900 mb-2">No Transactions Yet</h4>
+                        <p className="text-gray-600 mb-6 max-w-md mx-auto">Start your financial journey by making your first transaction. Transfer funds, make deposits, or explore our services.</p>
+                        <div className="flex items-center justify-center space-x-3">
+                          <Link
+                            to="/transfer"
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                          >
+                            Transfer Money
+                          </Link>
+                          <Link
+                            to="/deposit"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                          >
+                            Make Deposit
+                          </Link>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     mockTransactions.map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition-colors border border-gray-100"
+                      className="group flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-blue-200 hover:shadow-md"
                     >
                       <div className="flex items-center space-x-4">
-                        <div className={`p-2.5 rounded-lg ${
+                        <div className={`p-3 rounded-xl shadow-sm ${
                           transaction.amount > 0 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-red-100 text-red-600'
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white' 
+                            : 'bg-gradient-to-br from-red-500 to-pink-600 text-white'
                         }`}>
                           {transaction.amount > 0 ? (
                             <ArrowUpRight className="w-5 h-5" />
@@ -619,21 +738,33 @@ const Dashboard: React.FC = () => {
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{transaction.description}</p>
+                          <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                            {transaction.description}
+                          </p>
                           <div className="flex items-center space-x-2">
                             <span className="text-sm text-gray-500">{transaction.category}</span>
-                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
                             <span className="text-sm text-gray-500">{transaction.date}</span>
+                            <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+                            <span className="text-xs text-gray-400 capitalize px-2 py-0.5 bg-gray-100 rounded-md">
+                              {transaction.type}
+                            </span>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-semibold ${
-                          transaction.amount > 0 ? 'text-green-600' : 'text-gray-900'
+                        <p className={`font-bold text-lg ${
+                          transaction.amount > 0 ? 'text-emerald-600' : 'text-gray-900'
                         }`}>
                           {transaction.amount > 0 ? '+' : ''}{formatCurrency(transaction.amount)}
                         </p>
-                        <p className="text-xs text-gray-500 capitalize">{transaction.type}</p>
+                        <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          transaction.amount > 0 
+                            ? 'bg-emerald-100 text-emerald-700' 
+                            : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {transaction.amount > 0 ? 'Credit' : 'Debit'}
+                        </div>
                       </div>
                     </div>
                     ))
@@ -728,76 +859,183 @@ const Dashboard: React.FC = () => {
                 </div>
               )}
 
-              {/* Monthly Summary */}
-              <div className="bg-white rounded-xl border p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Overview
-                  </h3>
-                  <PieChart className="w-5 h-5 text-gray-400" />
+              {/* Monthly Summary - Enhanced */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
+                      <BarChart3 className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">Monthly Overview</h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                {/* Would calculate from actual transaction data */}
-                <div className="text-center py-8">
-                  <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">No Monthly Data Yet</h4>
-                  <p className="text-gray-500 mb-4">Start making transactions to see your monthly overview</p>
-                  <button
-                    onClick={() => navigate('/transfer')}
-                    className="text-blue-600 hover:text-blue-700 font-medium"
+                
+                {/* Enhanced Empty State */}
+                <div className="text-center py-8 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-transparent to-blue-50 rounded-xl"></div>
+                  <div className="relative z-10">
+                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <TrendingUp className="w-8 h-8 text-emerald-600" />
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-900 mb-2">Start Your Journey</h4>
+                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                      Begin making transactions to unlock detailed insights and monthly analytics
+                    </p>
+                    
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      <button
+                        onClick={() => navigate('/transfer')}
+                        className="group bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-2 rounded-lg transition-all duration-200 font-medium"
+                      >
+                        <Send className="w-4 h-4 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs">Transfer</span>
+                      </button>
+                      <button
+                        onClick={() => navigate('/deposit')}
+                        className="group bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-lg transition-all duration-200 font-medium"
+                      >
+                        <Plus className="w-4 h-4 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+                        <span className="text-xs">Deposit</span>
+                      </button>
+                    </div>
+                    
+                    {/* Placeholder Statistics */}
+                    <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-gray-900">$0</div>
+                        <div className="text-xs text-gray-500">Income</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-gray-900">$0</div>
+                        <div className="text-xs text-gray-500">Expenses</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-bold text-emerald-600">$0</div>
+                        <div className="text-xs text-gray-500">Savings</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Links - Enhanced */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
+                    <p className="text-sm text-gray-500">Frequently used features</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Link
+                    to="/account"
+                    className="group flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-blue-200 hover:shadow-md"
                   >
-                    Make Your First Transaction
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">Account Statement</span>
+                        <p className="text-xs text-gray-500">Download statements</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                  
+                  <Link
+                    to="/ewallets"
+                    className="group flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-emerald-200 hover:shadow-md"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-emerald-100 group-hover:bg-emerald-200 rounded-lg flex items-center justify-center transition-colors">
+                        <Wallet className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-900 group-hover:text-emerald-700 transition-colors">Digital Wallets</span>
+                        <p className="text-xs text-gray-500">Manage e-wallets</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                  
+                  <button
+                    onClick={() => setShowSecuritySettings(true)}
+                    className="group w-full flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-purple-200 hover:shadow-md"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
+                        <Lock className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="text-left">
+                        <span className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors">Security Settings</span>
+                        <p className="text-xs text-gray-500">Manage account security</p>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
                   </button>
                 </div>
               </div>
 
-              {/* Quick Links */}
-              <div className="bg-white rounded-xl border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Frequently Used</h3>
-                <div className="space-y-3">
-                  <Link
-                    to="/account"
-                    className="flex items-center justify-between p-3 hover:bg-blue-50 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FileText className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-                      <span className="text-gray-700 group-hover:text-blue-700">Account Statement</span>
+              {/* Security Notice - Enhanced */}
+              <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 rounded-2xl border-2 border-amber-200 p-6 relative overflow-hidden shadow-sm">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-amber-200 rounded-full -translate-y-10 translate-x-10 opacity-30"></div>
+                <div className="absolute bottom-0 left-0 w-16 h-16 bg-orange-200 rounded-full translate-y-8 -translate-x-8 opacity-40"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-start space-x-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <Shield className="w-6 h-6 text-white" />
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                  </Link>
-                  <Link
-                    to="/ewallets"
-                    className="flex items-center justify-between p-3 hover:bg-blue-50 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Wallet className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-                      <span className="text-gray-700 group-hover:text-blue-700">Digital Wallets</span>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="font-bold text-amber-900">Security Status</h4>
+                        <div className="flex items-center bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                          <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1"></div>
+                          Protected
+                        </div>
+                      </div>
+                      <p className="text-sm text-amber-800 leading-relaxed mb-4">
+                        Your account is protected with enterprise-grade security including 2FA, encryption, and fraud monitoring.
+                      </p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                  </Link>
-                  <Link
-                    to="/profile"
-                    className="flex items-center justify-between p-3 hover:bg-blue-50 rounded-lg transition-colors group"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Settings className="w-5 h-5 text-gray-500 group-hover:text-blue-600" />
-                      <span className="text-gray-700 group-hover:text-blue-700">Security Settings</span>
+                  </div>
+                  
+                  {/* Security Features Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-amber-200">
+                      <div className="flex items-center space-x-2">
+                        <Lock className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-medium text-amber-900">2FA Enabled</span>
+                      </div>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Security Notice */}
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-200 p-6">
-                <div className="flex items-start space-x-3">
-                  <Shield className="w-6 h-6 text-amber-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-amber-900 mb-2">Security Notice</h4>
-                    <p className="text-sm text-amber-800 mb-3">
-                      Your account is protected with enterprise-grade security. Last security scan: Today
-                    </p>
-                    <button className="text-xs font-medium text-amber-700 hover:text-amber-800 underline">
-                      Review Security Settings
+                    <div className="bg-white bg-opacity-60 rounded-lg p-3 border border-amber-200">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-4 h-4 text-amber-600" />
+                        <span className="text-xs font-medium text-amber-900">Encrypted</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-amber-700 font-medium">Last scan: Today</p>
+                      <p className="text-xs text-amber-600">Next scan: Tomorrow</p>
+                    </div>
+                    <button 
+                      onClick={() => setShowSecuritySettings(true)}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors shadow-sm"
+                    >
+                      Review Settings
                     </button>
                   </div>
                 </div>
