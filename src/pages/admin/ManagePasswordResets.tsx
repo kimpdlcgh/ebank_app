@@ -8,17 +8,7 @@ import {
   updatePasswordResetRequest, 
   PasswordResetRequest 
 } from '../../services/PasswordResetService';
-import { PasswordGenerator } from '../../utils/passwordGenerator';
-import { 
-  doc, 
-  updateDoc, 
-  serverTimestamp,
-  collection,
-  query,
-  where,
-  getDocs
-} from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { AdminPasswordResetService } from '../../services/AdminPasswordResetService';
 import toast from 'react-hot-toast';
 import PasswordResetApprovalModal from '../../components/modals/PasswordResetApprovalModal';
 import { 
@@ -77,137 +67,70 @@ const ManagePasswordResets: React.FC = () => {
   };
 
   const processPasswordReset = async (method: 'email' | 'manual', tempPassword?: string) => {
-    if (!selectedRequest || !currentUser?.email) {
-      toast.error('Admin user not authenticated');
+    if (!selectedRequest || !currentUser?.email || !selectedRequest.id) {
+      toast.error('Admin user not authenticated or request ID missing');
       return;
     }
     
-    setProcessingRequest(selectedRequest.id!);
+    setProcessingRequest(selectedRequest.id);
     
     try {
       console.log('Starting password reset approval for:', selectedRequest.username);
       console.log('Current admin user:', currentUser.email);
       console.log('Reset method:', method);
-      console.log('Request details:', selectedRequest);
       
-      // Generate new temporary password (used for both methods)
-      const newTempPassword = tempPassword || PasswordGenerator.generateSecurePassword({
-        length: 12,
-        includeUppercase: true,
-        includeLowercase: true,
-        includeNumbers: true,
-        includeSpecialChars: true
-      });
-      
-      console.log('Generated temporary password for user:', selectedRequest.username);
-
-      // Find the user document by username first, then update it
-      const usersQuery = query(
-        collection(db, 'users'),
-        where('username', '==', selectedRequest.username)
+      // Use the AdminPasswordResetService to handle the reset
+      const result = await AdminPasswordResetService.completePasswordReset(
+        selectedRequest.id,
+        method,
+        selectedRequest.username,
+        currentUser.email,
+        tempPassword
       );
       
-      const userSnapshot = await getDocs(usersQuery);
-      if (userSnapshot.empty) {
-        throw new Error(`User with username ${selectedRequest.username} not found`);
-      }
-      
-      // Update the user document with the correct document ID
-      const userDoc = userSnapshot.docs[0];
-      console.log('Found user document with ID:', userDoc.id);
-      
-      const userRef = doc(db, 'users', userDoc.id);
-      const userData = userDoc.data();
-      
-      if (method === 'email') {
-        // Method 1: Send Firebase password reset email
-        const { sendPasswordResetEmail } = await import('firebase/auth');
-        const { auth } = await import('../../config/firebase');
-        
-        console.log('Sending password reset email to:', userData.email);
-        await sendPasswordResetEmail(auth, userData.email);
-        
-        // Update user document to track email method
-        await updateDoc(userRef, {
-          mustChangePassword: true,
-          passwordResetBy: currentUser.email,
-          passwordResetAt: serverTimestamp(),
-          passwordResetRequestId: selectedRequest.requestId,
-          passwordResetEmailSent: true,
-          passwordResetMethod: 'email'
+      if (result.success) {
+        const successMessage = method === 'email' 
+          ? `Password reset email sent to ${selectedRequest.firstName} ${selectedRequest.lastName}`
+          : `Manual password reset processed! Temporary password: ${result.temporaryPassword}. Email reset also sent as backup.`;
+          
+        toast.success(successMessage, {
+          duration: method === 'manual' ? 15000 : 8000, // Longer duration for manual reset
+          style: method === 'manual' ? {
+            maxWidth: '500px',
+            padding: '16px',
+          } : {}
         });
         
-        console.log('Password reset email sent and user document updated');
+        // Show method-specific console output
+        if (method === 'email') {
+          console.log('=== PASSWORD RESET EMAIL SENT ===');
+          console.log(`User: ${selectedRequest.firstName} ${selectedRequest.lastName}`);
+          console.log(`Username: ${selectedRequest.username}`);
+          console.log(`Request ID: ${selectedRequest.requestId}`);
+          console.log('User will receive Firebase password reset email');
+          console.log('=====================================');
+        } else {
+          console.log('=== MANUAL PASSWORD RESET ===');
+          console.log(`User: ${selectedRequest.firstName} ${selectedRequest.lastName}`);
+          console.log(`Username: ${selectedRequest.username}`);
+          console.log(`TEMPORARY PASSWORD: ${result.temporaryPassword}`);
+          console.log(`Request ID: ${selectedRequest.requestId}`);
+          console.log('🚨 IMPORTANT: Communicate this password securely to the user');
+          console.log('🚨 User must change password on next login');
+          console.log('📧 Password reset email also sent as backup option');
+          console.log('✅ User can either use the temporary password OR the email reset link');
+          console.log('==============================');
+        }
         
-      } else if (method === 'manual') {
-        // Method 2: Manual password reset (Admin must communicate password)
-        console.log('Processing manual password reset for:', userData.email);
-        
-        // Update user document with temporary password information
-        await updateDoc(userRef, {
-          mustChangePassword: true,
-          passwordResetBy: currentUser.email,
-          passwordResetAt: serverTimestamp(),
-          passwordResetRequestId: selectedRequest.requestId,
-          temporaryPassword: newTempPassword,
-          passwordResetMethod: 'manual',
-          adminMustCommunicatePassword: true
-        });
-        
-        console.log('Manual password reset processed - Admin must communicate password to user');
-      }
-      
-      console.log('Successfully updated user document');
-
-      // Verify request ID exists
-      if (!selectedRequest.id) {
-        throw new Error('Request ID is missing');
-      }
-
-      // Update the request status
-      await updatePasswordResetRequest(selectedRequest.id, {
-        status: 'approved',
-        adminNotes: `Password reset approved. Firebase password reset email sent to ${userData.email}. User can now reset their password using the email link.`
-      }, currentUser.email);
-      
-      console.log('Successfully updated request status to approved');
-
-      const successMessage = method === 'email' 
-        ? `Password reset email sent to ${selectedRequest.firstName} ${selectedRequest.lastName}`
-        : `Manual password reset processed for ${selectedRequest.firstName} ${selectedRequest.lastName}`;
-        
-      toast.success(successMessage, {
-        duration: 8000
-      });
-      
-      // Show method-specific console output
-      if (method === 'email') {
-        console.log('=== PASSWORD RESET EMAIL SENT ===');
-        console.log(`User: ${selectedRequest.firstName} ${selectedRequest.lastName}`);
-        console.log(`Username: ${selectedRequest.username}`);
-        console.log(`Email: ${userData.email}`);
-        console.log(`Password reset email sent to: ${userData.email}`);
-        console.log(`Request ID: ${selectedRequest.requestId}`);
-        console.log('User will receive Firebase password reset email');
-        console.log('=====================================');
+        setShowApprovalModal(false);
+        setSelectedRequest(null);
+        await loadRequests(); // Refresh the list
       } else {
-        console.log('=== MANUAL PASSWORD RESET ===');
-        console.log(`User: ${selectedRequest.firstName} ${selectedRequest.lastName}`);
-        console.log(`Username: ${selectedRequest.username}`);
-        console.log(`Email: ${userData.email}`);
-        console.log(`TEMPORARY PASSWORD: ${newTempPassword}`);
-        console.log(`Request ID: ${selectedRequest.requestId}`);
-        console.log('🚨 IMPORTANT: Communicate this password securely to the user');
-        console.log('🚨 User must change password on next login');
-        console.log('==============================');
+        throw new Error(result.error || result.message);
       }
-
-      setShowApprovalModal(false);
-      setSelectedRequest(null);
-      await loadRequests(); // Refresh the list
       
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Failed to approve password reset request';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to approve password reset request';
       toast.error(errorMessage);
       console.error('Error approving request:', error);
       console.error('Request details:', {

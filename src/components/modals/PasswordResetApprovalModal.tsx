@@ -138,11 +138,14 @@ const PasswordResetApprovalModal: React.FC<PasswordResetApprovalModalProps> = ({
                     <span className="font-medium text-gray-900">Manual Temporary Password</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Set a temporary password for the user. You'll need to communicate this securely.
+                    Generate a temporary password for the user. A password reset email will also be sent as backup.
                   </p>
                   <div className="mt-2 text-xs text-orange-600 flex items-center">
                     <AlertCircle className="w-3 h-3 mr-1" />
-                    Requires secure communication
+                    Communicate the temporary password securely to the user
+                  </div>
+                  <div className="mt-1 text-xs text-blue-600">
+                    ✓ Password reset email will also be sent as backup option
                   </div>
                 </div>
               </div>
