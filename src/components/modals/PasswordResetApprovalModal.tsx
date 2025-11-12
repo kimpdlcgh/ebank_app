@@ -24,22 +24,10 @@ const PasswordResetApprovalModal: React.FC<PasswordResetApprovalModalProps> = ({
   isProcessing
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<'email' | 'manual'>('email');
-  const [tempPassword, setTempPassword] = useState('');
-
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let result = '';
-    for (let i = 0; i < 12; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setTempPassword(result);
-  };
 
   const handleApprove = async () => {
-    if (selectedMethod === 'manual' && !tempPassword) {
-      return;
-    }
-    await onApprove(selectedMethod, tempPassword);
+    // Both methods now use Firebase native reset, no temp password needed
+    await onApprove(selectedMethod);
   };
 
   if (!isOpen || !request) return null;
@@ -134,49 +122,36 @@ const PasswordResetApprovalModal: React.FC<PasswordResetApprovalModalProps> = ({
                 />
                 <div className="flex-1">
                   <div className="flex items-center mb-1">
-                    <Key className="w-4 h-4 text-orange-600 mr-2" />
-                    <span className="font-medium text-gray-900">Manual Temporary Password</span>
+                    <Key className="w-4 h-4 text-blue-600 mr-2" />
+                    <span className="font-medium text-gray-900">Admin-Initiated Reset</span>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Generate a temporary password for the user. A password reset email will also be sent as backup.
+                    Send Firebase password reset email (same as Firebase Console). User will receive a secure reset link.
                   </p>
-                  <div className="mt-2 text-xs text-orange-600 flex items-center">
-                    <AlertCircle className="w-3 h-3 mr-1" />
-                    Communicate the temporary password securely to the user
+                  <div className="mt-2 text-xs text-green-600 flex items-center">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Uses Firebase's native password reset system
                   </div>
                   <div className="mt-1 text-xs text-blue-600">
-                    ✓ Password reset email will also be sent as backup option
+                    ✓ Same secure process as Firebase Console
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Manual Password Input */}
+            {/* Info for Manual Method */}
             {selectedMethod === 'manual' && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Temporary Password
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tempPassword}
-                    onChange={(e) => setTempPassword(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="Enter temporary password"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={generatePassword}
-                    className="px-3"
-                  >
-                    Generate
-                  </Button>
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800">Firebase Native Reset</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      This will send the same secure password reset email that Firebase Console uses. 
+                      The user will receive a secure link to reset their password directly through Firebase.
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  User will be required to change this password on next login
-                </p>
               </div>
             )}
           </div>
@@ -190,7 +165,7 @@ const PasswordResetApprovalModal: React.FC<PasswordResetApprovalModalProps> = ({
             </Button>
             <Button
               onClick={handleApprove}
-              disabled={isProcessing || (selectedMethod === 'manual' && !tempPassword)}
+              disabled={isProcessing}
               className="bg-green-600 hover:bg-green-700"
             >
               {isProcessing ? (

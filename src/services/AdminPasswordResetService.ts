@@ -50,11 +50,14 @@ export class AdminPasswordResetService {
       }
       
       // Send Firebase password reset email
-      await sendPasswordResetEmail(auth, user.email);
-      console.log('Password reset email sent to:', user.email);
+      const userEmail = user.email as string;
+      const userId = user.id as string;
+      
+      await sendPasswordResetEmail(auth, userEmail);
+      console.log('Password reset email sent to:', userEmail);
       
       // Update user document
-      await updateDoc(doc(db, 'users', user.id), {
+      await updateDoc(doc(db, 'users', userId), {
         mustChangePassword: true,
         passwordResetBy: adminEmail,
         passwordResetAt: serverTimestamp(),
@@ -79,16 +82,16 @@ export class AdminPasswordResetService {
   }
   
   /**
-   * Process password reset request with manual temporary password
+   * Process password reset request with Firebase native reset email
+   * This ensures compatibility with Firebase Authentication system
    */
   static async processManualReset(
     username: string,
     adminEmail: string,
-    requestId: string,
-    customTempPassword?: string
+    requestId: string
   ): Promise<AdminPasswordResetResult> {
     try {
-      console.log('Processing manual password reset for username:', username);
+      console.log('Processing Firebase-native password reset for username:', username);
       
       // Find user by username
       const user = await this.findUserByUsername(username);
@@ -96,52 +99,36 @@ export class AdminPasswordResetService {
         throw new Error(`User with username ${username} not found`);
       }
       
-      // Generate secure temporary password
-      const tempPassword = customTempPassword || PasswordGenerator.generateSecurePassword({
-        length: 12,
-        includeUppercase: true,
-        includeLowercase: true,
-        includeNumbers: true,
-        includeSpecialChars: true
-      });
+      // Use Firebase's native password reset email (same as Firebase Console)
+      const userEmail = user.email as string;
+      const userId = user.id as string;
       
-      console.log('Generated temporary password for user:', username);
+      await sendPasswordResetEmail(auth, userEmail);
+      console.log('Firebase password reset email sent to:', userEmail);
       
-      // Also send password reset email as backup
-      try {
-        await sendPasswordResetEmail(auth, user.email);
-        console.log('Backup password reset email sent to:', user.email);
-      } catch (emailError) {
-        console.warn('Failed to send backup reset email:', emailError);
-        // Continue with manual reset even if email fails
-      }
-      
-      // Update user document with temporary password info and backup email option
-      await updateDoc(doc(db, 'users', user.id), {
+      // Update user document to track the admin-initiated reset
+      await updateDoc(doc(db, 'users', userId), {
         mustChangePassword: true,
         passwordResetBy: adminEmail,
         passwordResetAt: serverTimestamp(),
         passwordResetRequestId: requestId,
-        temporaryPassword: tempPassword,
-        passwordResetMethod: 'manual',
-        adminMustCommunicatePassword: true,
-        passwordResetEmailSent: true, // Email sent as backup
-        adminNotes: `Manual password reset. Temporary password: ${tempPassword}. Password reset email also sent as backup option.`
+        passwordResetMethod: 'admin_initiated_firebase_reset',
+        passwordResetEmailSent: true,
+        adminNotes: `Admin-initiated Firebase password reset. Password reset email sent to ${userEmail}. User can reset password using Firebase's secure reset link.`
       });
       
-      console.log('Manual password reset completed for user:', username);
+      console.log('Firebase password reset completed for user:', username);
       
       return {
         success: true,
-        temporaryPassword: tempPassword,
-        message: `Manual password reset completed. Temporary password generated. Email reset also sent as backup.`
+        message: `Firebase password reset email sent to ${userEmail}. User will receive the same secure reset email as from Firebase Console.`
       };
       
     } catch (error: unknown) {
-      console.error('Manual password reset error:', error);
+      console.error('Firebase password reset error:', error);
       return {
         success: false,
-        message: 'Failed to process manual password reset',
+        message: 'Failed to send Firebase password reset email',
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
@@ -154,8 +141,7 @@ export class AdminPasswordResetService {
     requestId: string,
     method: 'email' | 'manual',
     username: string,
-    adminEmail: string,
-    tempPassword?: string
+    adminEmail: string
   ): Promise<AdminPasswordResetResult> {
     try {
       let result: AdminPasswordResetResult;
@@ -163,14 +149,14 @@ export class AdminPasswordResetService {
       if (method === 'email') {
         result = await this.processEmailReset(username, adminEmail, requestId);
       } else {
-        result = await this.processManualReset(username, adminEmail, requestId, tempPassword);
+        result = await this.processManualReset(username, adminEmail, requestId);
       }
       
       if (result.success) {
         // Update the password reset request status
         const adminNotes = method === 'email'
           ? `Password reset approved. Firebase password reset email sent. User can reset their password using the email link.`
-          : `Manual password reset approved. Temporary password: ${result.temporaryPassword}. Password reset email also sent as backup. Admin must securely communicate the temporary password to the user.`;
+          : `Admin-initiated password reset approved. Firebase password reset email sent using native Firebase system. User will receive the same secure reset link as from Firebase Console.`;
           
         await updatePasswordResetRequest(requestId, {
           status: 'approved',
@@ -195,7 +181,7 @@ export class AdminPasswordResetService {
   /**
    * Find user by username
    */
-  private static async findUserByUsername(username: string): Promise<any | null> {
+  private static async findUserByUsername(username: string): Promise<Record<string, unknown> | null> {
     try {
       const usersQuery = query(
         collection(db, 'users'),

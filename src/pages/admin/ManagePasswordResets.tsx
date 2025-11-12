@@ -66,7 +66,7 @@ const ManagePasswordResets: React.FC = () => {
     setShowApprovalModal(true);
   };
 
-  const processPasswordReset = async (method: 'email' | 'manual', tempPassword?: string) => {
+  const processPasswordReset = async (method: 'email' | 'manual') => {
     if (!selectedRequest || !currentUser?.email || !selectedRequest.id) {
       toast.error('Admin user not authenticated or request ID missing');
       return;
@@ -79,26 +79,19 @@ const ManagePasswordResets: React.FC = () => {
       console.log('Current admin user:', currentUser.email);
       console.log('Reset method:', method);
       
-      // Use the AdminPasswordResetService to handle the reset
-      const result = await AdminPasswordResetService.completePasswordReset(
-        selectedRequest.id,
-        method,
-        selectedRequest.username,
-        currentUser.email,
-        tempPassword
-      );
-      
-      if (result.success) {
+        // Use the AdminPasswordResetService to handle the reset
+        const result = await AdminPasswordResetService.completePasswordReset(
+          selectedRequest.id,
+          method,
+          selectedRequest.username,
+          currentUser.email
+        );      if (result.success) {
         const successMessage = method === 'email' 
           ? `Password reset email sent to ${selectedRequest.firstName} ${selectedRequest.lastName}`
-          : `Manual password reset processed! Temporary password: ${result.temporaryPassword}. Email reset also sent as backup.`;
+          : `Firebase password reset email sent to ${selectedRequest.firstName} ${selectedRequest.lastName}. Same secure process as Firebase Console.`;
           
         toast.success(successMessage, {
-          duration: method === 'manual' ? 15000 : 8000, // Longer duration for manual reset
-          style: method === 'manual' ? {
-            maxWidth: '500px',
-            padding: '16px',
-          } : {}
+          duration: 8000
         });
         
         // Show method-specific console output
@@ -110,16 +103,14 @@ const ManagePasswordResets: React.FC = () => {
           console.log('User will receive Firebase password reset email');
           console.log('=====================================');
         } else {
-          console.log('=== MANUAL PASSWORD RESET ===');
+          console.log('=== ADMIN-INITIATED FIREBASE PASSWORD RESET ===');
           console.log(`User: ${selectedRequest.firstName} ${selectedRequest.lastName}`);
           console.log(`Username: ${selectedRequest.username}`);
-          console.log(`TEMPORARY PASSWORD: ${result.temporaryPassword}`);
           console.log(`Request ID: ${selectedRequest.requestId}`);
-          console.log('🚨 IMPORTANT: Communicate this password securely to the user');
-          console.log('🚨 User must change password on next login');
-          console.log('📧 Password reset email also sent as backup option');
-          console.log('✅ User can either use the temporary password OR the email reset link');
-          console.log('==============================');
+          console.log('� Firebase password reset email sent using native Firebase system');
+          console.log('✅ User will receive the SAME secure reset link as from Firebase Console');
+          console.log('🎯 No temporary passwords needed - uses Firebase Auth directly');
+          console.log('=================================================');
         }
         
         setShowApprovalModal(false);
