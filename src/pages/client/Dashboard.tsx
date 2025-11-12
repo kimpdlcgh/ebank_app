@@ -775,85 +775,196 @@ const Dashboard: React.FC = () => {
 
             {/* Right Sidebar */}
             <div className="space-y-6">
-              {/* Account Details */}
+              {/* Account Details - Enhanced Modern Design */}
               {selectedAccount && (
-                <div className="bg-white rounded-xl border p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Account Details</h3>
-                    <Shield className="w-5 h-5 text-blue-500" />
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm relative overflow-hidden">
+                  {/* Gradient Background */}
+                  <div className={`absolute inset-0 opacity-5 ${
+                    selectedAccount.accountType === 'savings' 
+                      ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
+                      : selectedAccount.accountType === 'checking'
+                      ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                      : 'bg-gradient-to-br from-purple-500 to-pink-600'
+                  }`}></div>
+                  
+                  {/* Header */}
+                  <div className="relative z-10 flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+                        selectedAccount.accountType === 'savings' 
+                          ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
+                          : selectedAccount.accountType === 'checking'
+                          ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
+                          : 'bg-gradient-to-br from-purple-500 to-pink-600'
+                      }`}>
+                        <CreditCard className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">Account Overview</h3>
+                        <p className="text-sm text-gray-500">Selected account details</p>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Account Holder</p>
-                      <p className="text-gray-900">{user?.firstName} {user?.lastName}</p>
+                  {/* Account Information Grid */}
+                  <div className="relative z-10 space-y-4">
+                    {/* Account Holder & Balance Row */}
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Account Holder</p>
+                          <User className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <p className="text-lg font-bold text-gray-900">{user?.firstName} {user?.lastName}</p>
+                      </div>
                     </div>
                     
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Account Number</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-gray-900 font-mono">
-                          {balanceVisible 
-                            ? selectedAccount.accountNumber 
-                            : `****${selectedAccount.accountNumber?.slice(-4) || '****'}`
-                          }
-                        </p>
+                    {/* Balance Display */}
+                    <div className={`rounded-xl p-4 bg-gradient-to-br ${
+                      selectedAccount.accountType === 'savings' 
+                        ? 'from-emerald-50 to-teal-50 border border-emerald-200' 
+                        : selectedAccount.accountType === 'checking'
+                        ? 'from-blue-50 to-indigo-50 border border-blue-200'
+                        : 'from-purple-50 to-pink-50 border border-purple-200'
+                    }`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Current Balance</p>
                         <button
                           onClick={() => setBalanceVisible(!balanceVisible)}
-                          className="text-gray-400 hover:text-gray-600 p-1"
+                          className="text-gray-500 hover:text-gray-700 p-1 hover:bg-white hover:bg-opacity-50 rounded-md transition-all"
                         >
                           {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
-                    </div>
-                    
-                    {selectedAccount.routingNumber && (
-                      <div>
-                        <p className="text-sm font-medium text-gray-500 mb-1">Routing Number</p>
-                        <p className="text-gray-900 font-mono">
-                          {balanceVisible ? selectedAccount.routingNumber : '•••••••••'}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Account Type</p>
-                      <p className="text-gray-900 capitalize">{selectedAccount.accountType || selectedAccount.type}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm font-medium text-gray-500 mb-1">Current Balance</p>
-                      <p className="text-xl font-bold text-gray-900">
+                      <p className="text-2xl font-black text-gray-900">
                         {balanceVisible ? formatCurrency(selectedAccount.balance || 0) : '••••••••'}
                       </p>
+                      <div className={`flex items-center mt-2 text-sm font-medium ${
+                        selectedAccount.balance > 0 ? 'text-emerald-600' : 'text-gray-500'
+                      }`}>
+                        <TrendingUp className="w-4 h-4 mr-1" />
+                        Available
+                      </div>
                     </div>
                     
+                    {/* Account Numbers Grid */}
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="bg-white border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Account Number</p>
+                          <button
+                            onClick={() => setBalanceVisible(!balanceVisible)}
+                            className="text-gray-400 hover:text-gray-600 p-0.5 hover:bg-gray-100 rounded transition-all"
+                          >
+                            {balanceVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                          </button>
+                        </div>
+                        <p className="font-mono text-sm font-bold text-gray-900">
+                          {balanceVisible 
+                            ? selectedAccount.accountNumber 
+                            : `••••-••••-••••-${selectedAccount.accountNumber?.slice(-4) || '••••'}`
+                          }
+                        </p>
+                      </div>
+                      
+                      {selectedAccount.routingNumber && (
+                        <div className="bg-white border border-gray-200 rounded-lg p-3">
+                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Routing Number</p>
+                          <p className="font-mono text-sm font-bold text-gray-900">
+                            {balanceVisible ? selectedAccount.routingNumber : '•••••••••'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Account Type & Status */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Type</p>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-bold text-gray-900 capitalize">{selectedAccount.accountType || selectedAccount.type}</p>
+                          {selectedAccount.primary && (
+                            <Star className="w-4 h-4 text-yellow-500" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Status</p>
+                        <span className={`inline-flex items-center text-xs font-bold ${
+                          selectedAccount.status === 'active' 
+                            ? 'text-emerald-700' 
+                            : 'text-red-700'
+                        }`}>
+                          <div className={`w-2 h-2 rounded-full mr-1.5 ${
+                            selectedAccount.status === 'active' ? 'bg-emerald-500' : 'bg-red-500'
+                          }`}></div>
+                          {selectedAccount.status === 'active' ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Active Features - Compact Grid */}
                     {selectedAccount.features && Object.keys(selectedAccount.features).some(key => selectedAccount.features[key]) && (
                       <div>
-                        <p className="text-sm font-medium text-gray-500 mb-2">Active Features</p>
-                        <div className="space-y-1">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Active Features</p>
+                        <div className="grid grid-cols-2 gap-2">
                           {Object.entries(selectedAccount.features)
-                            .filter(([_, enabled]) => enabled)
-                            .map(([feature, _]) => (
-                              <div key={feature} className="flex items-center space-x-2">
-                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                <span className="text-sm text-gray-700">
-                                  {feature.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                                </span>
-                              </div>
-                            ))
+                            .filter(([, enabled]) => enabled)
+                            .slice(0, 6)
+                            .map(([feature]) => {
+                              const featureName = feature.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                              const getFeatureIcon = (f: string) => {
+                                if (f.includes('online')) return <Globe className="w-3 h-3" />;
+                                if (f.includes('mobile')) return <Smartphone className="w-3 h-3" />;
+                                if (f.includes('card')) return <CreditCard className="w-3 h-3" />;
+                                if (f.includes('transfer')) return <Send className="w-3 h-3" />;
+                                return <Zap className="w-3 h-3" />;
+                              };
+                              
+                              return (
+                                <div 
+                                  key={feature}
+                                  className="flex items-center space-x-2 bg-white border border-gray-200 rounded-md px-2 py-1.5 text-xs"
+                                >
+                                  <div className="text-blue-600 flex-shrink-0">
+                                    {getFeatureIcon(feature)}
+                                  </div>
+                                  <span className="text-gray-700 font-medium truncate">
+                                    {featureName.length > 12 ? featureName.substring(0, 12) + '...' : featureName}
+                                  </span>
+                                </div>
+                              );
+                            })
                           }
                         </div>
+                        {Object.entries(selectedAccount.features).filter(([, enabled]) => enabled).length > 6 && (
+                          <p className="text-xs text-gray-500 mt-2 text-center">
+                            +{Object.entries(selectedAccount.features).filter(([, enabled]) => enabled).length - 6} more
+                          </p>
+                        )}
                       </div>
                     )}
                     
-                    <div className="pt-3 border-t">
-                      <p className="text-xs text-gray-500">
-                        Account opened: {selectedAccount.createdAt ? 
-                          new Date(selectedAccount.createdAt.toDate ? selectedAccount.createdAt.toDate() : selectedAccount.createdAt).toLocaleDateString() 
-                          : 'N/A'
-                        }
-                      </p>
+                    {/* Footer Information */}
+                    <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-medium text-gray-500">Account opened</p>
+                        <p className="text-sm font-bold text-gray-900">
+                          {selectedAccount.createdAt ? 
+                            new Date(selectedAccount.createdAt.toDate ? selectedAccount.createdAt.toDate() : selectedAccount.createdAt).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            })
+                            : 'N/A'
+                          }
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs font-medium text-gray-500">Last updated</p>
+                        <p className="text-sm font-bold text-gray-900">Today</p>
+                      </div>
                     </div>
                   </div>
                 </div>
