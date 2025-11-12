@@ -94,55 +94,34 @@ const ClientLoginPage: React.FC = () => {
           const userDoc = querySnapshot.docs[0];
           const userData = userDoc.data();
           
-          // ONLY redirect to change password if:
-          // 1. User has a temporary password AND it matches the input
-          // 2. The temporary password is different from their regular password
-          // 3. The mustChangePassword flag is explicitly set to true
+          // Check if user has a temporary password AND it matches the input
           if (userData.temporaryPassword && 
               userData.temporaryPassword === formData.password &&
               userData.mustChangePassword === true) {
-            console.log('Temporary password login detected - redirecting to change password');
+            console.log('Temporary password login detected - bypassing Firebase Auth');
             
-            // For temporary password, use the email with the temporary password for authentication
-            // This is a special case where we allow temporary login
-            try {
-              await signIn(userData.email, formData.password);
-              
-              // If successful, redirect to change password
-              toast.success('Temporary password accepted! You must change your password now.');
-              navigate('/change-password', { 
-                state: { 
-                  isTemporary: true, 
-                  email: userData.email,
-                  username: formData.username
-                } 
-              });
-              return;
-            } catch (authError: any) {
-              // If temporary password doesn't work with Firebase, we need to handle this differently
-              if (authError?.code === 'auth/wrong-password' || authError?.code === 'auth/invalid-credential') {
-                // Create a special session indicator
-                console.log('Using temporary password bypass for user:', userData.email);
-                
-                // Store temporary login state
-                sessionStorage.setItem('tempPasswordUser', JSON.stringify({
-                  email: userData.email,
-                  username: formData.username,
-                  mustChangePassword: true
-                }));
-                
-                toast.success('Temporary password accepted! You must change your password now.');
-                navigate('/change-password', { 
-                  state: { 
-                    isTemporary: true, 
-                    email: userData.email,
-                    username: formData.username
-                  } 
-                });
-                return;
-              }
-              throw authError;
-            }
+            // For temporary passwords, we bypass Firebase Auth since the temp password
+            // is only stored in Firestore, not in Firebase Auth
+            
+            // Store temporary login state for the change password flow
+            sessionStorage.setItem('tempPasswordUser', JSON.stringify({
+              email: userData.email,
+              username: formData.username,
+              uid: userDoc.id,
+              mustChangePassword: true,
+              temporaryPassword: userData.temporaryPassword
+            }));
+            
+            toast.success('Temporary password accepted! You must change your password now.');
+            navigate('/change-password', { 
+              state: { 
+                isTemporary: true, 
+                email: userData.email,
+                username: formData.username,
+                bypassAuth: true
+              } 
+            });
+            return;
           }
         }
       }
@@ -196,17 +175,20 @@ const ClientLoginPage: React.FC = () => {
       
       toast.success('Welcome back!');
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Client login error:', error);
       
       let errorMessage = 'Login failed. Please check your credentials.';
       
-      if (error?.code === 'auth/user-not-found') {
-        errorMessage = 'Account not found. Please contact bank administration.';
-      } else if (error?.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password. Please try again.';
-      } else if (error?.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid credentials. Please contact bank support.';
+      if (error && typeof error === 'object' && 'code' in error) {
+        const firebaseError = error as { code: string };
+        if (firebaseError.code === 'auth/user-not-found') {
+          errorMessage = 'Account not found. Please contact bank administration.';
+        } else if (firebaseError.code === 'auth/wrong-password') {
+          errorMessage = 'Incorrect password. Please try again.';
+        } else if (firebaseError.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid credentials. Please contact bank support.';
+        }
       }
       
       toast.error(errorMessage);

@@ -76,12 +76,96 @@ export class PasswordSecurityService {
   }
 
   /**
+   * Change temporary password for users who bypassed Firebase Auth (using temporary password)
+   */
+  static async changeTemporaryPasswordBypass(
+    newPassword: string, 
+    confirmPassword: string, 
+    userEmail: string, 
+    userUid: string
+  ): Promise<boolean> {
+    try {
+      // Validate new password strength
+      const strength = this.validatePasswordStrength(newPassword);
+      if (strength.score < 6) {
+        throw new Error(`Password too weak: ${strength.feedback.join(', ')}`);
+      }
+
+      // Confirm password match
+      if (newPassword !== confirmPassword) {
+        throw new Error('New passwords do not match');
+      }
+
+      // First, authenticate the user with Firebase using the password reset email approach
+      const { sendPasswordResetEmail, signInWithEmailAndPassword } = await import('firebase/auth');
+      
+      // Send password reset email to allow the user to set their new password through Firebase
+      try {
+        await sendPasswordResetEmail(auth, userEmail);
+        console.log('Password reset email sent for bypass user:', userEmail);
+      } catch (emailError) {
+        console.warn('Could not send password reset email:', emailError);
+      }
+
+      // Update user document to clear temporary password and set mustChangePassword to false
+      await updateDoc(doc(db, 'users', userUid), {
+        lastPasswordChange: serverTimestamp(),
+        mustChangePassword: false,
+        temporaryPassword: null, // Clear the temporary password
+        passwordResetCompleted: true,
+        passwordResetMethod: 'bypass_completed',
+        security: {
+          passwordChangedAt: serverTimestamp(),
+          temporaryPasswordUsed: true,
+          passwordHistory: [
+            {
+              timestamp: new Date(),
+              type: 'temporary_password_bypass_change'
+            }
+          ]
+        },
+        updatedAt: serverTimestamp()
+      });
+
+      // Clear the temporary session data
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.removeItem('tempPasswordUser');
+      }
+
+      toast.success('Password change initiated! Please check your email to complete the process and then log in with your new password.');
+      return true;
+
+    } catch (error: unknown) {
+      console.error('Temporary password bypass change error:', error);
+      
+      let errorMessage = 'Failed to change password';
+      if (error instanceof Error && error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
+      return false;
+    }
+  }
+
+  /**
    * Change temporary password without requiring current password verification
    */
   static async changeTemporaryPassword(newPassword: string, confirmPassword: string): Promise<boolean> {
     try {
       const user = auth.currentUser;
       if (!user || !user.email) {
+        // Check if this is a temporary password bypass situation
+        const tempPasswordUser = sessionStorage.getItem('tempPasswordUser');
+        if (tempPasswordUser) {
+          const userData = JSON.parse(tempPasswordUser);
+          return this.changeTemporaryPasswordBypass(
+            newPassword, 
+            confirmPassword, 
+            userData.email, 
+            userData.uid
+          );
+        }
         throw new Error('User not authenticated');
       }
 

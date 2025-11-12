@@ -32,12 +32,16 @@ const ChangePasswordPage: React.FC = () => {
   const [generatedPasswords, setGeneratedPasswords] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Redirect if not logged in
+  // Check for temporary password bypass or redirect if not logged in
   useEffect(() => {
-    if (!user) {
+    const tempPasswordUser = sessionStorage.getItem('tempPasswordUser');
+    const bypassAuth = location.state?.bypassAuth;
+    
+    // Allow access if user is logged in OR if using temporary password bypass
+    if (!user && !tempPasswordUser && !bypassAuth) {
       navigate('/client-login');
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.state]);
 
   // Update password strength when new password changes
   useEffect(() => {
@@ -104,7 +108,7 @@ const ChangePasswordPage: React.FC = () => {
     }
   };
 
-  const useGeneratedPassword = (password: string) => {
+  const applyGeneratedPassword = (password: string) => {
     setFormData(prev => ({
       ...prev,
       newPassword: password,
@@ -178,9 +182,10 @@ const ChangePasswordPage: React.FC = () => {
           navigate('/login');
         }, 2000);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Password change error:', error);
-      toast.error(error.message || 'Failed to change password');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -369,7 +374,7 @@ const ChangePasswordPage: React.FC = () => {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => useGeneratedPassword(password)}
+                                onClick={() => applyGeneratedPassword(password)}
                                 className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
                               >
                                 Use
