@@ -26,6 +26,25 @@ const ClientLoginPage: React.FC = () => {
     }
   }, [user, navigate]);
 
+  // Check for password reset success message
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const message = urlParams.get('message');
+    
+    if (message === 'password-reset-success') {
+      toast.success('Password changed successfully! You can now sign in with your new password.', {
+        duration: 6000,
+        style: {
+          background: '#10B981',
+          color: '#ffffff',
+        },
+      });
+      
+      // Clean up the URL
+      window.history.replaceState({}, document.title, '/client-login');
+    }
+  }, []);
+
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
       ...prev,

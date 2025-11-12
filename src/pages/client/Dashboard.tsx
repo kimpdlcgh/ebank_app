@@ -486,17 +486,17 @@ const Dashboard: React.FC = () => {
                 }`}
                 onClick={() => setSelectedAccount(account)}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
                       <CreditCard className="w-6 h-6 text-blue-600" />
                     </div>
-                    <div>
-                      <p className="font-semibold text-gray-900 capitalize">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-900 capitalize truncate">
                         {account.accountName || `${account.accountType || account.type} Account`}
                       </p>
                       <div className="flex items-center space-x-2">
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 truncate">
                           {balanceVisible ? account.accountNumber : `****${account.accountNumber?.slice(-4) || '****'}`}
                         </p>
                         <button
@@ -504,7 +504,7 @@ const Dashboard: React.FC = () => {
                             e.stopPropagation();
                             setBalanceVisible(!balanceVisible);
                           }}
-                          className="text-xs text-gray-400 hover:text-gray-600"
+                          className="text-xs text-gray-400 hover:text-gray-600 flex-shrink-0"
                         >
                           {balanceVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                         </button>
@@ -512,7 +512,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   {account.primary && (
-                    <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full">
+                    <span className="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 self-start sm:self-center">
                       Primary
                     </span>
                   )}

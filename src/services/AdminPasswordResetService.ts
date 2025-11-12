@@ -36,7 +36,7 @@ export class AdminPasswordResetService {
    * Process password reset request with email method
    */
   static async processEmailReset(
-    username: string, 
+    username: string,
     adminEmail: string,
     requestId: string
   ): Promise<AdminPasswordResetResult> {
@@ -49,11 +49,15 @@ export class AdminPasswordResetService {
         throw new Error(`User with username ${username} not found`);
       }
       
-      // Send Firebase password reset email
+      // Send Firebase password reset email with continue URL
       const userEmail = user.email as string;
       const userId = user.id as string;
       
-      await sendPasswordResetEmail(auth, userEmail);
+      // Configure action code settings to use our custom password reset page
+      const actionCodeSettings = {
+        url: `${window.location.origin}/password-reset`,
+        handleCodeInApp: false,
+      };      await sendPasswordResetEmail(auth, userEmail, actionCodeSettings);
       console.log('Password reset email sent to:', userEmail);
       
       // Update user document
@@ -99,11 +103,17 @@ export class AdminPasswordResetService {
         throw new Error(`User with username ${username} not found`);
       }
       
-      // Use Firebase's native password reset email (same as Firebase Console)
+      // Use Firebase's native password reset email with continue URL
       const userEmail = user.email as string;
       const userId = user.id as string;
       
-      await sendPasswordResetEmail(auth, userEmail);
+      // Configure action code settings to use our custom password reset page
+      const actionCodeSettings = {
+        url: `${window.location.origin}/password-reset`,
+        handleCodeInApp: false,
+      };
+      
+      await sendPasswordResetEmail(auth, userEmail, actionCodeSettings);
       console.log('Firebase password reset email sent to:', userEmail);
       
       // Update user document to track the admin-initiated reset

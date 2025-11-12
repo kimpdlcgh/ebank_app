@@ -9,6 +9,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Auth pages - bank-standard separation
 import ClientLoginPage from './pages/auth/ClientLoginPage';
 import ChangePasswordPage from './pages/auth/ChangePasswordPage';
+import PasswordResetActionPage from './pages/auth/PasswordResetActionPage';
 // SignupPage removed - admin-only account creation system
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 
@@ -137,6 +138,14 @@ function AppContent() {
           element={
             <PublicRoute>
               <ForgotPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/password-reset"
+          element={
+            <PublicRoute>
+              <PasswordResetActionPage />
             </PublicRoute>
           }
         />
