@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow public read access to system configuration
+    match /systemConfig/{document} {
+      allow read: if true;
+    }
+    
+    // Allow public read access to countries collection
+    match /countries/{document} {
+      allow read: if true;
+    }
+    
+    // Users collection - restricted access for security
+    match /users/{userId} {
+      // Allow authenticated users to read their own data
+      allow read: if request.auth != null && request.auth.uid == userId;
+      
+      // Allow admins to read/write all user data
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // Allow creation of new users by admins
+      allow create: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Special rule for username lookups during login
+    // This allows reading ONLY email and role fields when filtering by username
+    match /users/{userId} {
+      allow read: if request.auth == null && 
+        resource.data.keys().hasOnly(['email', 'role', 'username', 'uid', 'isActive']) &&
+        request.query.where[0][0] == 'username';
+    }
+    
+    // Bank accounts collection
+    match /accounts/{accountId} {
+      // Users can read their own accounts
+      allow read: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      
+      // Admins can read/write all accounts
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      
+      // Allow account creation by admins
+      allow create: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Transactions collection
+    match /transactions/{transactionId} {
+      // Users can read their own transactions
+      allow read: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      
+      // Admins can read/write all transactions
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Support requests collection
+    match /supportRequests/{requestId} {
+      // Users can read/write their own support requests
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      
+      // Admins can read/write all support requests
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // FAQ collection - public read access
+    match /faqs/{faqId} {
+      allow read: if true;
+      
+      // Only admins can write FAQs
+      allow write: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
