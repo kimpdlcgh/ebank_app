@@ -197,6 +197,21 @@ export const useSystemConfig = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizeLogoPath = (logoPath?: string | null) => {
+    const trimmedPath = logoPath?.trim();
+
+    if (!trimmedPath) {
+      return '/frbr_logo.png';
+    }
+
+    const normalizedPath = trimmedPath.toLowerCase();
+    if (normalizedPath === '/sglogo.png' || normalizedPath === 'sglogo.png') {
+      return '/frbr_logo.png';
+    }
+
+    return trimmedPath;
+  };
+
   useEffect(() => {
     const configRef = doc(db, 'systemConfig', 'main');
     
@@ -237,7 +252,7 @@ export const useSystemConfig = () => {
   // Helper functions for easier access to common config values
   const getCompanyName = () => config.companyInfo.name;
   const getPrimaryLogo = () => {
-    const logo = config.branding.logo.primary || '/frbr_logo.png'; // Always provide static fallback
+    const logo = normalizeLogoPath(config.branding.logo.primary);
     console.log('🎯 useSystemConfig: getPrimaryLogo called');
     console.log('   - Config loaded:', !loading);
     console.log('   - Logo value:', logo ? `"${logo}"` : 'empty/null');
