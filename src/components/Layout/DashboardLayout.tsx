@@ -200,10 +200,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subt
                 <User className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">
+                <Link
+                  to="/dashboard"
+                  onClick={() => setSidebarOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-gray-900 hover:text-blue-700 transition-colors"
+                  title="Back to dashboard"
+                >
                   {user?.email?.split('@')[0] || 'User'}
-                </p>
+                  <Home className="w-3.5 h-3.5" />
+                </Link>
                 <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setSidebarOpen(false)}
+                  className="mt-1 inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  Back to Dashboard
+                </Link>
               </div>
             </div>
           </div>
@@ -295,6 +308,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subt
               </div>
               
               <div className="flex items-center space-x-3">
+                {location.pathname !== '/dashboard' && (
+                  <Link
+                    to="/dashboard"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                    title="Back to dashboard"
+                  >
+                    <Home className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                )}
                 <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                   <Bell className="w-5 h-5" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
