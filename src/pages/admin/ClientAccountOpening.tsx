@@ -409,6 +409,36 @@ const ClientAccountOpening: React.FC = () => {
   const handleSubmit = async () => {
     if (!validateStep(6)) return;
 
+    const sanitizeFirestoreData = (value: any): any => {
+      if (Array.isArray(value)) {
+        return value
+          .filter((item) => item !== undefined)
+          .map((item) => sanitizeFirestoreData(item));
+      }
+
+      if (value && typeof value === 'object' && !(value instanceof Date)) {
+        return Object.fromEntries(
+          Object.entries(value)
+            .filter(([, nestedValue]) => nestedValue !== undefined)
+            .map(([nestedKey, nestedValue]) => [nestedKey, sanitizeFirestoreData(nestedValue)])
+        );
+      }
+
+      return value;
+    };
+
+    const getErrorCode = (error: unknown) => {
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        return String((error as { code: string }).code);
+      }
+
+      if (error instanceof Error) {
+        return error.message;
+      }
+
+      return '';
+    };
+
     setIsSubmitting(true);
     try {
       // Generate credentials and account details (username is now user-entered)
@@ -427,90 +457,145 @@ const ClientAccountOpening: React.FC = () => {
       setClientData(finalClientData);
       
       // Import Firebase functions
-      const { createUserWithEmailAndPassword } = await import('firebase/auth');
-      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
-      const { auth, db } = await import('../../config/firebase');
+      const { createUserWithEmailAndPassword, deleteUser, getAuth, signOut } = await import('firebase/auth');
+      const { collection, doc, getDocs, query, serverTimestamp, setDoc, where } = await import('firebase/firestore');
+      const { app, db } = await import('../../config/firebase');
+      const { deleteApp, getApps, initializeApp } = await import('firebase/app');
+
+      const existingUsernameQuery = query(
+        collection(db, 'users_public'),
+        where('username', '==', finalClientData.username)
+      );
+      const existingUsernameSnapshot = await getDocs(existingUsernameQuery);
+      if (!existingUsernameSnapshot.empty) {
+        toast.error('Username is already in use. Please choose a different username.');
+        return;
+      }
       
-      // 1. Create Firebase Auth user
+      // 1. Create Firebase Auth user (use secondary app to avoid switching admin session)
       console.log('Creating Firebase Auth user...');
-      const userCredential = await createUserWithEmailAndPassword(auth, finalClientData.email, temporaryPassword);
-      const firebaseUser = userCredential.user;
+      const secondaryApp = getApps().find(existing => existing.name === 'Secondary') || initializeApp(app.options, 'Secondary');
+      const secondaryAuth = getAuth(secondaryApp);
+      let firebaseUser: Awaited<ReturnType<typeof createUserWithEmailAndPassword>>['user'] | null = null;
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, finalClientData.email, temporaryPassword);
+        firebaseUser = userCredential.user;
+      } finally {
+        try {
+          await signOut(secondaryAuth);
+        } catch (signOutError) {
+          console.warn('Secondary auth sign-out failed:', signOutError);
+        }
+
+        try {
+          await deleteApp(secondaryApp);
+        } catch (deleteAppError) {
+          console.warn('Secondary app cleanup failed:', deleteAppError);
+        }
+      }
+
+      if (!firebaseUser) {
+        throw new Error('Client authentication account could not be created.');
+      }
       
       toast.success('✅ User authentication created successfully!');
       
-      // 2. Create user document in Firestore
-      const userData = {
-        uid: firebaseUser.uid,
-        email: finalClientData.email,
-        firstName: finalClientData.firstName,
-        middleName: finalClientData.middleName || '',
-        lastName: finalClientData.lastName,
-        dateOfBirth: finalClientData.dateOfBirth,
-        gender: finalClientData.gender,
-        phone: finalClientData.phone,
-        alternatePhone: finalClientData.alternatePhone || '',
+      try {
+        // 2. Create user document in Firestore
+        const userData = sanitizeFirestoreData({
+          uid: firebaseUser.uid,
+          email: finalClientData.email,
+          firstName: finalClientData.firstName,
+          middleName: finalClientData.middleName || '',
+          lastName: finalClientData.lastName,
+          dateOfBirth: finalClientData.dateOfBirth,
+          gender: finalClientData.gender || '',
+          phone: finalClientData.phone || '',
+          alternatePhone: finalClientData.alternatePhone || '',
+          
+          // Address
+          address: {
+            line1: finalClientData.addressLine1 || '',
+            line2: finalClientData.addressLine2 || '',
+            city: finalClientData.city || '',
+            state: finalClientData.state || '',
+            postalCode: finalClientData.postalCode || '',
+            country: finalClientData.addressCountry || finalClientData.country || ''
+          },
+          
+          // Identity
+          country: finalClientData.country || '',
+          isUSCitizen: finalClientData.isUSCitizen,
+          residencyStatus: finalClientData.residencyStatus || '',
+          ssn: finalClientData.ssn || '',
+          passportNumber: finalClientData.passportNumber || '',
+          passportCountry: finalClientData.passportCountry || '',
+          nationalId: finalClientData.nationalId || '',
+          taxId: finalClientData.taxId || '',
+          
+          // Employment
+          employment: {
+            status: finalClientData.employmentStatus || '',
+            employer: finalClientData.employer || '',
+            jobTitle: finalClientData.jobTitle || '',
+            workAddress: finalClientData.workAddress || '',
+            annualIncome: finalClientData.annualIncome || '',
+            incomeSource: finalClientData.incomeSource || ''
+          },
+          
+          // Compliance
+          compliance: {
+            fatcaStatus: finalClientData.fatcaStatus || '',
+            crsReporting: finalClientData.crsReporting,
+            pep: finalClientData.pep,
+            sanctionsScreening: finalClientData.sanctionsScreening,
+            amlCompliance: finalClientData.amlCompliance,
+            kycStatus: 'approved',
+            riskProfile: finalClientData.riskProfile || 'low'
+          },
+          
+          // System fields
+          role: UserRole.CLIENT,
+          isActive: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: currentUser?.uid || 'admin',
+          
+          // Login credentials
+          username: finalClientData.username,
+          temporaryPassword: temporaryPassword,
+          mustChangePassword: true
+        });
         
-        // Address
-        address: {
-          line1: finalClientData.addressLine1,
-          line2: finalClientData.addressLine2 || '',
-          city: finalClientData.city,
-          state: finalClientData.state,
-          postalCode: finalClientData.postalCode,
-          country: finalClientData.addressCountry || finalClientData.country
-        },
-        
-        // Identity
-        country: finalClientData.country,
-        isUSCitizen: finalClientData.isUSCitizen,
-        residencyStatus: finalClientData.residencyStatus,
-        ssn: finalClientData.ssn || '',
-        passportNumber: finalClientData.passportNumber || '',
-        passportCountry: finalClientData.passportCountry || '',
-        nationalId: finalClientData.nationalId || '',
-        taxId: finalClientData.taxId || '',
-        
-        // Employment
-        employment: {
-          status: finalClientData.employmentStatus,
-          employer: finalClientData.employer || '',
-          jobTitle: finalClientData.jobTitle || '',
-          workAddress: finalClientData.workAddress || '',
-          annualIncome: finalClientData.annualIncome,
-          incomeSource: finalClientData.incomeSource
-        },
-        
-        // Compliance
-        compliance: {
-          fatcaStatus: finalClientData.fatcaStatus || '',
-          crsReporting: finalClientData.crsReporting,
-          pep: finalClientData.pep,
-          sanctionsScreening: finalClientData.sanctionsScreening,
-          amlCompliance: finalClientData.amlCompliance,
-          kycStatus: 'approved',
-          riskProfile: finalClientData.riskProfile
-        },
-        
-        // System fields
-        role: UserRole.CLIENT,
-        isActive: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: currentUser?.uid || 'admin',
-        
-        // Login credentials
-        username: finalClientData.username,
-        temporaryPassword: temporaryPassword,
-        mustChangePassword: true
-      };
-      
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      await setDoc(userDocRef, userData);
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        await setDoc(userDocRef, userData);
+
+        // Create public lookup record for client login (username -> email)
+        const publicUserRef = doc(db, 'users_public', firebaseUser.uid);
+        await setDoc(publicUserRef, sanitizeFirestoreData({
+          uid: firebaseUser.uid,
+          email: finalClientData.email,
+          username: finalClientData.username,
+          role: UserRole.CLIENT,
+          isActive: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }));
+      } catch (firestoreUserError) {
+        try {
+          await deleteUser(firebaseUser);
+        } catch (rollbackError) {
+          console.error('Failed to rollback auth user after Firestore user creation error:', rollbackError);
+        }
+
+        throw firestoreUserError;
+      }
       
       toast.success('✅ User profile created successfully!');
       
       // 3. Create bank account
-      const bankAccountData = {
+      const bankAccountData = sanitizeFirestoreData({
         userId: firebaseUser.uid,
         accountNumber: accountNumber,
         routingNumber: routingNumber,
@@ -555,7 +640,7 @@ const ClientAccountOpening: React.FC = () => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdBy: currentUser?.uid || 'admin'
-      };
+      });
       
       const accountDocRef = doc(db, 'accounts', `${firebaseUser.uid}_${finalClientData.accountType}`);
       await setDoc(accountDocRef, bankAccountData);
@@ -607,7 +692,7 @@ const ClientAccountOpening: React.FC = () => {
       
       // 5. Create initial transaction record for deposit
       if (parseFloat(finalClientData.initialDeposit) > 0) {
-        const transactionData = {
+        const transactionData = sanitizeFirestoreData({
           userId: firebaseUser.uid,
           accountId: `${firebaseUser.uid}_${finalClientData.accountType}`,
           transactionId: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -628,7 +713,7 @@ const ClientAccountOpening: React.FC = () => {
           createdAt: serverTimestamp(),
           processedAt: serverTimestamp(),
           createdBy: currentUser?.uid || 'admin'
-        };
+        });
         
         const transactionDocRef = doc(db, 'transactions', transactionData.transactionId);
         await setDoc(transactionDocRef, transactionData);
@@ -643,14 +728,17 @@ const ClientAccountOpening: React.FC = () => {
       
     } catch (error) {
       console.error('Error creating client account:', error);
+      const errorCode = getErrorCode(error);
       
       if (error instanceof Error) {
-        if (error.message.includes('email-already-in-use')) {
+        if (errorCode.includes('email-already-in-use')) {
           toast.error('Email address is already registered. Please use a different email.');
-        } else if (error.message.includes('weak-password')) {
+        } else if (errorCode.includes('weak-password')) {
           toast.error('Generated password does not meet requirements. Please try again.');
-        } else if (error.message.includes('PERMISSION_DENIED')) {
+        } else if (errorCode.includes('permission-denied') || errorCode.includes('PERMISSION_DENIED')) {
           toast.error('Database permission denied. Please check Firestore security rules.');
+        } else if (errorCode.includes('invalid-email')) {
+          toast.error('The client email address is invalid. Please correct it and try again.');
         } else {
           toast.error(`Account creation failed: ${error.message}`);
         }
