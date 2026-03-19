@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import AdminLayout from '../../components/Layout/AdminLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
   CreditCard, 
@@ -19,23 +20,119 @@ import {
   FileText,
   BarChart3
 } from 'lucide-react';
+import { useFirestore } from '../../hooks/useFirestore';
 
 const Dashboard: React.FC = () => {
-  // Dashboard data - initially empty/default values, will be populated from database/API
-  const stats = {
-    totalUsers: 0,
-    activeUsers: 0,
-    totalAccounts: 0,
-    totalBalance: 0,
-    pendingTransactions: 0,
-    completedTransactions: 0,
-    monthlyGrowth: 0,
-    systemHealth: 100
+  const navigate = useNavigate();
+
+  const { data: users, loading: usersLoading } = useFirestore('users', (query) => query.orderByField('createdAt', 'desc'));
+  const { data: accounts, loading: accountsLoading } = useFirestore('accounts', (query) => query.orderByField('createdAt', 'desc'));
+  const { data: transactions } = useFirestore('transactions', (query) => query.orderByField('createdAt', 'desc'));
+  const { data: notifications, loading: notificationsLoading } = useFirestore(
+    'admin_notifications',
+    (query) => query.orderByField('timestamp', 'desc').limitTo(10),
+    { realTime: true, cacheEnabled: false }
+  );
+  const { data: passwordResetRequests } = useFirestore(
+    'password_reset_requests',
+    (query) => query.orderByField('submittedAt', 'desc').limitTo(10),
+    { realTime: true, cacheEnabled: false }
+  );
+
+  const formatTimestamp = (value: any) => {
+    if (!value) return '—';
+    if (value?.toDate) return value.toDate().toLocaleString();
+    if (typeof value === 'number' || typeof value === 'string') {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString();
+    }
+    return '—';
   };
 
-  const recentActivities: any[] = [];
+  const stats = useMemo(() => {
+    const totalUsers = users.length;
+    const activeUsers = users.filter((user) => user.status === 'approved' || user.status === 'active' || user.isActive).length;
+    const totalAccounts = accounts.length;
+    const totalBalance = accounts.reduce((sum, account) => sum + (account.balance || 0), 0);
+    const pendingTransactions = transactions.filter((txn) => txn.status === 'pending' || txn.status === 'review').length;
+    const completedTransactions = transactions.filter((txn) => txn.status === 'completed').length;
 
-  const pendingApprovals: any[] = [];
+    const now = Date.now();
+    const monthlyNewUsers = users.filter((user) => {
+      const createdAt = user.createdAt?.toDate ? user.createdAt.toDate().getTime() : user.createdAt;
+      if (!createdAt) return false;
+      return now - createdAt < 30 * 24 * 60 * 60 * 1000;
+    }).length;
+
+    const monthlyGrowth = totalUsers > 0 ? Math.round((monthlyNewUsers / totalUsers) * 100) : 0;
+    const systemHealth = Math.max(85, 100 - pendingTransactions * 2);
+
+    return {
+      totalUsers,
+      activeUsers,
+      totalAccounts,
+      totalBalance,
+      pendingTransactions,
+      completedTransactions,
+      monthlyGrowth,
+      systemHealth
+    };
+  }, [users, accounts, transactions]);
+
+  const recentActivities = useMemo(() => {
+    return notifications.map((notification) => {
+      const type = notification.type === 'account_created'
+        ? 'user_signup'
+        : notification.type === 'password_reset'
+          ? 'security'
+          : notification.type === 'security_alert'
+            ? 'security'
+            : 'system';
+
+      const status = notification.priority === 'critical'
+        ? 'error'
+        : notification.priority === 'high'
+          ? 'warning'
+          : 'info';
+
+      return {
+        id: notification.id,
+        type,
+        status,
+        description: `${notification.title} — ${notification.message}`,
+        timestamp: formatTimestamp(notification.timestamp)
+      };
+    });
+  }, [notifications]);
+
+  const pendingApprovals = useMemo(() => {
+    const pendingAccounts = accounts
+      .filter((account) => account.status === 'pending_approval')
+      .slice(0, 5)
+      .map((account) => ({
+        id: account.id,
+        type: 'Account Approval',
+        priority: 'high',
+        user: account.accountName || account.accountHolderName || account.userEmail || 'Unknown client',
+        amount: account.balance ? `$${account.balance.toLocaleString()}` : undefined,
+        submittedAt: formatTimestamp(account.createdAt),
+        action: () => navigate('/admin/accounts')
+      }));
+
+    const pendingPasswordResets = passwordResetRequests
+      .filter((request) => request.status === 'pending')
+      .slice(0, 5)
+      .map((request) => ({
+        id: request.id,
+        type: 'Password Reset Request',
+        priority: request.reason === 'account_compromised' || request.reason === 'security_concern' ? 'high' : 'medium',
+        user: `${request.firstName} ${request.lastName}`,
+        submittedAt: formatTimestamp(request.submittedAt),
+        action: () => navigate('/admin/password-resets')
+      }));
+
+    return [...pendingAccounts, ...pendingPasswordResets].slice(0, 6);
+  }, [accounts, passwordResetRequests, navigate]);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -105,7 +202,7 @@ const Dashboard: React.FC = () => {
                 <p className="text-2xl font-bold text-gray-900">{stats.totalAccounts.toLocaleString()}</p>
                 <p className="text-xs text-blue-500 flex items-center mt-1">
                   <CheckCircle className="w-3 h-3 mr-1" />
-                  {((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}% active
+                  {stats.totalUsers > 0 ? ((stats.activeUsers / stats.totalUsers) * 100).toFixed(1) : '0.0'}% active
                 </p>
               </div>
               <div className="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -140,28 +237,34 @@ const Dashboard: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
               </div>
               <div className="p-6">
-                <div className="space-y-4">
-                  {recentActivities.map((activity) => {
-                    const IconComponent = getActivityIcon(activity.type);
-                    return (
-                      <div key={activity.id} className="flex items-center space-x-4">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center ${getActivityColor(activity.status)}`}>
-                          <IconComponent className="h-5 w-5" />
+                {notificationsLoading ? (
+                  <div className="text-sm text-gray-500">Loading activity...</div>
+                ) : recentActivities.length === 0 ? (
+                  <div className="text-sm text-gray-500">No recent activity yet.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentActivities.map((activity) => {
+                      const IconComponent = getActivityIcon(activity.type);
+                      return (
+                        <div key={activity.id} className="flex items-center space-x-4">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${getActivityColor(activity.status)}`}>
+                            <IconComponent className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-900">{activity.description}</p>
+                            <p className="text-xs text-gray-500">{activity.timestamp}</p>
+                          </div>
+                          <Button variant="outline" size="sm" className="flex items-center" onClick={() => navigate('/admin/password-resets')}>
+                            <Eye className="w-3 h-3 mr-1" />
+                            View
+                          </Button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-900">{activity.description}</p>
-                          <p className="text-xs text-gray-500">{activity.timestamp}</p>
-                        </div>
-                        <Button variant="outline" size="sm" className="flex items-center">
-                          <Eye className="w-3 h-3 mr-1" />
-                          View
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
                 <div className="mt-6">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" onClick={() => navigate('/admin/password-resets')}>
                     View All Activity
                   </Button>
                 </div>
@@ -179,29 +282,37 @@ const Dashboard: React.FC = () => {
                 </span>
               </div>
               <div className="p-6">
-                <div className="space-y-4">
-                  {pendingApprovals.map((item) => (
-                    <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-sm font-medium text-gray-900">{item.type}</h4>
-                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                          item.priority === 'high' ? 'bg-red-100 text-red-800' :
-                          item.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {item.priority}
-                        </span>
+                {accountsLoading && usersLoading ? (
+                  <div className="text-sm text-gray-500">Loading approvals...</div>
+                ) : pendingApprovals.length === 0 ? (
+                  <div className="text-sm text-gray-500">No pending approvals.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingApprovals.map((item) => (
+                      <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="text-sm font-medium text-gray-900">{item.type}</h4>
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            item.priority === 'high' ? 'bg-red-100 text-red-800' :
+                            item.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {item.priority}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">User: {item.user}</p>
+                        {'amount' in item && item.amount && (
+                          <p className="text-sm text-gray-600 mb-2">Amount: {item.amount}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mb-3">{item.submittedAt}</p>
+                        <div className="flex space-x-2">
+                          <Button size="sm" className="flex-1" onClick={item.action}>Review</Button>
+                          <Button variant="outline" size="sm" className="flex-1" onClick={item.action}>Open</Button>
+                        </div>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">User: {item.user}</p>
-                      {item.amount && <p className="text-sm text-gray-600 mb-2">Amount: {item.amount}</p>}
-                      <p className="text-xs text-gray-500 mb-3">{item.submittedAt}</p>
-                      <div className="flex space-x-2">
-                        <Button size="sm" className="flex-1">Approve</Button>
-                        <Button variant="outline" size="sm" className="flex-1">Review</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -216,7 +327,7 @@ const Dashboard: React.FC = () => {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Manage Users</h3>
               <p className="text-sm text-gray-600 mb-4">View and manage user accounts</p>
-              <Button className="w-full">Go to Users</Button>
+              <Button className="w-full" onClick={() => navigate('/admin/users')}>Go to Users</Button>
             </div>
           </Card>
 
@@ -227,7 +338,7 @@ const Dashboard: React.FC = () => {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Transactions</h3>
               <p className="text-sm text-gray-600 mb-4">Monitor all transactions</p>
-              <Button className="w-full">View Transactions</Button>
+              <Button className="w-full" onClick={() => navigate('/admin/transactions')}>View Transactions</Button>
             </div>
           </Card>
 
@@ -238,7 +349,7 @@ const Dashboard: React.FC = () => {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Analytics</h3>
               <p className="text-sm text-gray-600 mb-4">View detailed reports</p>
-              <Button className="w-full">View Analytics</Button>
+              <Button className="w-full" onClick={() => navigate('/admin/analytics')}>View Analytics</Button>
             </div>
           </Card>
 
@@ -249,7 +360,7 @@ const Dashboard: React.FC = () => {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">System Settings</h3>
               <p className="text-sm text-gray-600 mb-4">Configure system settings</p>
-              <Button className="w-full">Open Settings</Button>
+              <Button className="w-full" onClick={() => navigate('/admin/settings')}>Open Settings</Button>
             </div>
           </Card>
         </div>

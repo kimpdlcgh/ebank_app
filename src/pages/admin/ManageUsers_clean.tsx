@@ -9,6 +9,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
 import { UserRole } from '../../types';
+import { isAdminRole, normalizeUserRole } from '../../utils/roleUtils';
 import toast from 'react-hot-toast';
 import { 
   Users, 
@@ -27,6 +28,25 @@ import {
   Info
 } from 'lucide-react';
 
+interface NewUserDataState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  department: string;
+  jobTitle: string;
+  requireTwoFactor: boolean;
+  temporaryPassword: string;
+  permissions: {
+    canManageUsers: boolean;
+    canManageAccounts: boolean;
+    canManageTransactions: boolean;
+    canViewReports: boolean;
+    canManageSettings: boolean;
+  };
+}
+
 const ManageUsers: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { config, getContactEmail } = useSystemConfigContext();
@@ -39,7 +59,7 @@ const ManageUsers: React.FC = () => {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
-  const [newUserData, setNewUserData] = useState({
+  const [newUserData, setNewUserData] = useState<NewUserDataState>({
     // Personal Information
     firstName: '',
     lastName: '',
@@ -47,7 +67,7 @@ const ManageUsers: React.FC = () => {
     phone: '',
     
     // Administrative Role Settings
-    role: 'admin',
+    role: UserRole.ADMIN,
     department: '',
     jobTitle: '',
     
@@ -75,7 +95,7 @@ const ManageUsers: React.FC = () => {
   // Filter users to show only admin and super-admin users
   const filteredUsers = users.filter(user => {
     // Only show administrative users (admin and super-admin)
-    const isAdminUser = user.role === 'admin' || user.role === 'super-admin';
+    const isAdminUser = isAdminRole(user.role);
     if (!isAdminUser) return false;
     
     const matchesSearch = 
@@ -84,7 +104,8 @@ const ManageUsers: React.FC = () => {
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const normalizedRole = normalizeUserRole(user.role);
+    const matchesRole = roleFilter === 'all' || normalizedRole === roleFilter;
     
     return matchesSearch && matchesStatus && matchesRole;
   });
@@ -120,7 +141,7 @@ const ManageUsers: React.FC = () => {
   };
 
   // Handle input changes
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof NewUserDataState, value: any) => {
     setNewUserData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -138,7 +159,7 @@ const ManageUsers: React.FC = () => {
       lastName: '',
       email: '',
       phone: '',
-      role: 'admin',
+      role: UserRole.ADMIN,
       department: '',
       jobTitle: '',
       requireTwoFactor: true,
@@ -215,7 +236,7 @@ const ManageUsers: React.FC = () => {
         firstName: newUserData.firstName || '',
         lastName: newUserData.lastName || '',
         phoneNumber: newUserData.phone || '',
-        role: newUserData.role === 'super-admin' ? UserRole.SUPER_ADMIN : UserRole.ADMIN,
+        role: newUserData.role === UserRole.SUPER_ADMIN ? UserRole.SUPER_ADMIN : UserRole.ADMIN,
         emailVerified: false,
         twoFactorEnabled: newUserData.requireTwoFactor,
         isActive: true,
@@ -325,7 +346,7 @@ ${config.companyInfo.name} Administration Team
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-600">Admin Users</p>
-                <p className="text-lg font-bold text-gray-900">{users.filter(u => u.role === 'admin' || u.role === 'super-admin').length}</p>
+                <p className="text-lg font-bold text-gray-900">{users.filter(u => isAdminRole(u.role)).length}</p>
               </div>
             </div>
           </Card>
@@ -338,7 +359,7 @@ ${config.companyInfo.name} Administration Team
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-600">Active Admins</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {users.filter(u => (u.role === 'admin' || u.role === 'super-admin') && u.status === 'active').length}
+                  {users.filter(u => isAdminRole(u.role) && u.status === 'active').length}
                 </p>
               </div>
             </div>
@@ -407,7 +428,7 @@ ${config.companyInfo.name} Administration Team
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admin</option>
-                <option value="super-admin">Super Admin</option>
+                <option value={UserRole.SUPER_ADMIN}>Super Admin</option>
               </select>
             </div>
             
@@ -615,7 +636,7 @@ ${config.companyInfo.name} Administration Team
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="admin">Administrator</option>
-                        <option value="super-admin">Super Administrator</option>
+                        <option value={UserRole.SUPER_ADMIN}>Super Administrator</option>
                       </select>
                     </div>
                     

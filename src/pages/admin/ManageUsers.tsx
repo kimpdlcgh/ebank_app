@@ -9,9 +9,11 @@ import { createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reau
 import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
 import { UserRole } from '../../types';
+import { isAdminRole, normalizeUserRole } from '../../utils/roleUtils';
 import { useUsers } from '../../hooks/useFirestore';
 import toast from 'react-hot-toast';
 import { createPasswordResetNotification, createAccountCreationNotification } from '../../utils/notificationService';
+import { backfillUsersPublic } from '../../utils/usersPublicBackfill';
 import { 
   Users, 
   Search, 
@@ -30,6 +32,63 @@ import {
   Key
 } from 'lucide-react';
 
+const defaultPermissions = {
+  canManageUsers: false,
+  canManageAccounts: true,
+  canManageTransactions: true,
+  canViewReports: true,
+  canManageSettings: false
+};
+
+type PermissionKey = keyof typeof defaultPermissions;
+
+interface NewUserDataState {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  role: string;
+  department: string;
+  jobTitle: string;
+  requireTwoFactor: boolean;
+  temporaryPassword: string;
+  permissions: Record<PermissionKey, boolean>;
+}
+
+const permissionOptions: Array<{ key: PermissionKey; label: string; description: string }> = [
+  {
+    key: 'canManageUsers',
+    label: 'Manage Admin Users',
+    description: 'Create, edit, or reset passwords for admin users.'
+  },
+  {
+    key: 'canManageAccounts',
+    label: 'Manage Client Accounts',
+    description: 'View, approve, or update client accounts.'
+  },
+  {
+    key: 'canManageTransactions',
+    label: 'Manage Transactions',
+    description: 'Review or approve client transactions.'
+  },
+  {
+    key: 'canViewReports',
+    label: 'View Reports',
+    description: 'Access operational and financial reports.'
+  },
+  {
+    key: 'canManageSettings',
+    label: 'Manage System Settings',
+    description: 'Update configuration and platform settings.'
+  }
+];
+
+const buildPermissions = (value: boolean): Record<PermissionKey, boolean> =>
+  permissionOptions.reduce((acc, permission) => {
+    acc[permission.key] = value;
+    return acc;
+  }, {} as Record<PermissionKey, boolean>);
+
 const ManageUsers: React.FC = () => {
   const { user: currentUser } = useAuth();
   const { config, getContactEmail } = useSystemConfigContext();
@@ -46,7 +105,7 @@ const ManageUsers: React.FC = () => {
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [selectedUserForReset, setSelectedUserForReset] = useState<any>(null);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [newUserData, setNewUserData] = useState({
+  const [newUserData, setNewUserData] = useState<NewUserDataState>({
     // Personal Information
     firstName: '',
     lastName: '',
@@ -54,7 +113,7 @@ const ManageUsers: React.FC = () => {
     phone: '',
     
     // Administrative Role Settings
-    role: 'admin',
+    role: UserRole.ADMIN,
     department: '',
     jobTitle: '',
     
@@ -63,13 +122,7 @@ const ManageUsers: React.FC = () => {
     temporaryPassword: '',
     
     // Access Permissions (for future enhancement)
-    permissions: {
-      canManageUsers: false,
-      canManageAccounts: true,
-      canManageTransactions: true,
-      canViewReports: true,
-      canManageSettings: false
-    }
+    permissions: defaultPermissions
   });
 
   // Display error if users failed to load
@@ -83,7 +136,7 @@ const ManageUsers: React.FC = () => {
   // Filter users to show only admin and super-admin users
   const filteredUsers = users.filter(user => {
     // Only show administrative users (admin and super-admin)
-    const isAdminUser = user.role === 'admin' || user.role === 'super-admin';
+    const isAdminUser = isAdminRole(user.role);
     if (!isAdminUser) return false;
     
     const matchesSearch = 
@@ -92,7 +145,8 @@ const ManageUsers: React.FC = () => {
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+    const normalizedRole = normalizeUserRole(user.role);
+    const matchesRole = roleFilter === 'all' || normalizedRole === roleFilter;
     
     return matchesSearch && matchesStatus && matchesRole;
   });
@@ -198,8 +252,42 @@ const ManageUsers: React.FC = () => {
   };
 
   // Handle input changes
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof NewUserDataState, value: any) => {
     setNewUserData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleRoleChange = (roleValue: string) => {
+    if (roleValue === UserRole.SUPER_ADMIN) {
+      setNewUserData(prev => ({
+        ...prev,
+        role: roleValue,
+        permissions: buildPermissions(true)
+      }));
+      return;
+    }
+
+    setNewUserData(prev => ({
+      ...prev,
+      role: roleValue,
+      permissions: prev.role === UserRole.SUPER_ADMIN ? defaultPermissions : prev.permissions
+    }));
+  };
+
+  const handlePermissionChange = (permissionKey: PermissionKey, value: boolean) => {
+    setNewUserData(prev => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [permissionKey]: value
+      }
+    }));
+  };
+
+  const setAllPermissions = (value: boolean) => {
+    setNewUserData(prev => ({
+      ...prev,
+      permissions: buildPermissions(value)
+    }));
   };
 
   // Modal handlers
@@ -216,18 +304,12 @@ const ManageUsers: React.FC = () => {
       lastName: '',
       email: '',
       phone: '',
-      role: 'admin',
+      role: UserRole.ADMIN,
       department: '',
       jobTitle: '',
       requireTwoFactor: true,
       temporaryPassword: '',
-      permissions: {
-        canManageUsers: false,
-        canManageAccounts: true,
-        canManageTransactions: true,
-        canViewReports: true,
-        canManageSettings: false
-      }
+      permissions: defaultPermissions
     });
   };
 
@@ -293,7 +375,7 @@ const ManageUsers: React.FC = () => {
         firstName: newUserData.firstName || '',
         lastName: newUserData.lastName || '',
         phoneNumber: newUserData.phone || '',
-        role: newUserData.role === 'super-admin' ? UserRole.SUPER_ADMIN : UserRole.ADMIN,
+        role: newUserData.role === UserRole.SUPER_ADMIN ? UserRole.SUPER_ADMIN : UserRole.ADMIN,
         emailVerified: false,
         twoFactorEnabled: newUserData.requireTwoFactor,
         isActive: true,
@@ -304,13 +386,7 @@ const ManageUsers: React.FC = () => {
         adminProfile: {
           department: newUserData.department || '',
           jobTitle: newUserData.jobTitle || '',
-          permissions: newUserData.permissions || {
-            canManageUsers: false,
-            canManageAccounts: true,
-            canManageTransactions: true,
-            canViewReports: true,
-            canManageSettings: false
-          }
+          permissions: newUserData.permissions || defaultPermissions
         }
       };
 
@@ -411,6 +487,32 @@ ${config.companyInfo.name} Administration Team
       subtitle="Manage administrative staff accounts and permissions"
     >
       <div className="p-6 space-y-6">
+        <Card className="p-4 border border-slate-200">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Backfill Client Login Lookup</p>
+              <p className="text-xs text-slate-600">
+                Creates missing users_public entries for clients with usernames.
+              </p>
+            </div>
+            <Button
+              onClick={async () => {
+                const toastId = toast.loading('Backfilling users_public...');
+                try {
+                  const result = await backfillUsersPublic();
+                  toast.success(
+                    `Done. Created ${result.created}, skipped ${result.skippedExisting}, missing usernames ${result.skippedMissingUsername}.`,
+                    { id: toastId }
+                  );
+                } catch (error) {
+                  toast.error('Backfill failed. Check permissions.', { id: toastId });
+                }
+              }}
+            >
+              Backfill users_public
+            </Button>
+          </div>
+        </Card>
         {/* System Overview Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="p-4">
@@ -420,7 +522,7 @@ ${config.companyInfo.name} Administration Team
               </div>
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-600">Admin Staff</p>
-                <p className="text-lg font-bold text-gray-900">{users.filter(u => u.role === 'admin' || u.role === 'super-admin').length}</p>
+                <p className="text-lg font-bold text-gray-900">{users.filter(u => isAdminRole(u.role)).length}</p>
               </div>
             </div>
           </Card>
@@ -502,7 +604,7 @@ ${config.companyInfo.name} Administration Team
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admin</option>
-                <option value="super-admin">Super Admin</option>
+                <option value={UserRole.SUPER_ADMIN}>Super Admin</option>
               </select>
             </div>
             
@@ -715,11 +817,11 @@ ${config.companyInfo.name} Administration Team
                       </label>
                       <select
                         value={newUserData.role}
-                        onChange={(e) => handleInputChange('role', e.target.value)}
+                        onChange={(e) => handleRoleChange(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="admin">Administrator</option>
-                        <option value="super-admin">Super Administrator</option>
+                        <option value={UserRole.SUPER_ADMIN}>Super Administrator</option>
                       </select>
                     </div>
                     
@@ -747,6 +849,58 @@ ${config.companyInfo.name} Administration Team
                         placeholder="e.g., Operations Manager, Compliance Officer"
                         className="w-full"
                       />
+                    </div>
+
+                    {/* Access Permissions */}
+                    <div className="md:col-span-2">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Access Permissions
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setAllPermissions(true)}
+                            disabled={newUserData.role === UserRole.SUPER_ADMIN}
+                            className="text-xs text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+                          >
+                            Select all
+                          </button>
+                          <span className="text-xs text-gray-300">|</span>
+                          <button
+                            type="button"
+                            onClick={() => setAllPermissions(false)}
+                            disabled={newUserData.role === UserRole.SUPER_ADMIN}
+                            className="text-xs text-blue-600 hover:text-blue-700 disabled:text-gray-400"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 rounded-md border border-gray-200 p-4 bg-gray-50">
+                        {permissionOptions.map((permission) => (
+                          <label key={permission.key} className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={newUserData.permissions[permission.key]}
+                              onChange={(e) => handlePermissionChange(permission.key, e.target.checked)}
+                              disabled={newUserData.role === UserRole.SUPER_ADMIN}
+                              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-gray-800">{permission.label}</p>
+                              <p className="text-xs text-gray-500">{permission.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      {newUserData.role === UserRole.SUPER_ADMIN && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Super Administrators automatically receive full access.
+                        </p>
+                      )}
                     </div>
                     
                     {/* Security Settings */}
