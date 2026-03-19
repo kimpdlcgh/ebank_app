@@ -558,11 +558,11 @@ const Dashboard: React.FC = () => {
                   
                   {/* Balance Section */}
                   <div className="mb-6">
-                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
-                      <p className="text-[clamp(1.9rem,3vw,2.15rem)] leading-tight font-bold text-gray-900 break-all sm:break-normal">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1 min-w-0">
+                      <p className="min-w-0 max-w-full text-[clamp(1.55rem,5.5vw,2.15rem)] leading-tight font-bold text-gray-900 break-all">
                         {balanceVisible ? formatCurrency(account.balance || 0) : '••••••••'}
                       </p>
-                      <div className={`inline-flex items-center text-sm font-medium whitespace-nowrap ${
+                      <div className={`inline-flex items-center text-sm font-medium whitespace-nowrap basis-full sm:basis-auto ${
                         account.balance > 0 ? 'text-emerald-600' : 'text-gray-500'
                       }`}>
                         <TrendingUp className="w-4 h-4 mr-1" />
