@@ -4,15 +4,51 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
-// Firebase configuration with fallback values for production
-const firebaseConfigValues = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCbAQrQEyETkBw_1nMlDwEnkn4jqt1uPpo",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "e-bank-dashboard.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "e-bank-dashboard",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "e-bank-dashboard.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "186587489295",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:186587489295:web:c63b39b5216981bf89ef7a",
+const requiredFirebaseEnvKeys = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+  'VITE_FIREBASE_STORAGE_BUCKET',
+  'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  'VITE_FIREBASE_APP_ID',
+] as const;
+
+const firebaseEnvConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
+
+const legacyDevFallbackConfig = {
+  apiKey: 'AIzaSyAu5kKrpCK5eCQVl9qkRKkxICqAF9JaVxc',
+  authDomain: 'frbr-ebank.firebaseapp.com',
+  projectId: 'frbr-ebank',
+  storageBucket: 'frbr-ebank.firebasestorage.app',
+  messagingSenderId: '988511047482',
+  appId: '1:988511047482:web:0226d38b4c0647c05c4a03',
+};
+
+const missingFirebaseEnvKeys = requiredFirebaseEnvKeys.filter((key) => !import.meta.env[key]?.trim());
+
+if (import.meta.env.PROD && missingFirebaseEnvKeys.length > 0) {
+  throw new Error(
+    `Missing Firebase environment variables: ${missingFirebaseEnvKeys.join(', ')}. ` +
+      'Set the exact production web app config in your deployment environment before building.'
+  );
+}
+
+if (import.meta.env.DEV && missingFirebaseEnvKeys.length > 0) {
+  console.warn(
+    `Using legacy Firebase development fallback because these env vars are missing: ${missingFirebaseEnvKeys.join(', ')}`
+  );
+}
+
+const firebaseConfigValues = missingFirebaseEnvKeys.length === 0
+  ? firebaseEnvConfig
+  : legacyDevFallbackConfig;
 
 // Firebase configuration - production ready
 const firebaseConfig = {

@@ -115,7 +115,7 @@ npm run type-check   # Validate TypeScript
 VITE_FIREBASE_API_KEY=your_production_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
 VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 VITE_FIREBASE_APP_ID=your_app_id
 VITE_APP_NAME=SecureBank Dashboard
@@ -123,6 +123,13 @@ VITE_DEBUG_MODE=false
 VITE_ENFORCE_HTTPS=true
 VITE_SESSION_TIMEOUT_MINUTES=30
 \`\`\`
+
+Use the exact Web app config from Firebase Console for the intended production project.
+
+- Go to Project settings → General → Your apps
+- Copy the Web app SDK config exactly as shown
+- Update Netlify environment variables and `.env.production` with the same values
+- Verify `VITE_FIREBASE_PROJECT_ID` matches the intended project before redeploying
 
 ## 🏪 Banking-Specific Features
 
