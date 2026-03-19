@@ -190,8 +190,10 @@ const AdminAccessPage: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const normalizedEmail = formData.email.trim();
+    const normalizedPassword = formData.password.trim();
     
-    if (!formData.email || !formData.password) {
+    if (!normalizedEmail || !normalizedPassword) {
       toast.error('Please enter both email and password');
       return;
     }
@@ -200,7 +202,7 @@ const AdminAccessPage: React.FC = () => {
       if (typeof window !== 'undefined') {
         window.sessionStorage.removeItem('adminMfaVerified');
       }
-      await signIn(formData.email, formData.password);
+      await signIn(normalizedEmail, normalizedPassword);
 
       const firebaseUser = auth.currentUser;
       if (!firebaseUser) {
@@ -237,6 +239,11 @@ const AdminAccessPage: React.FC = () => {
       navigate('/admin');
     } catch (error) {
       console.error('Admin login error:', error);
+      const errorCode = (error as { code?: string } | null)?.code;
+      if (errorCode === 'auth/invalid-credential') {
+        toast.error('Invalid email or password. Please try again.');
+        return;
+      }
       if (error instanceof Error) {
         if (error.message.includes('user-not-found')) {
           toast.error('Admin account not found');
