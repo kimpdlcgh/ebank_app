@@ -515,8 +515,8 @@ const Dashboard: React.FC = () => {
                 {/* Content */}
                 <div className="relative z-10">
                   {/* Header Section */}
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3">
-                    <div className="flex items-center space-x-4 min-w-0 flex-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3 pr-10">
+                    <div className="flex items-center gap-4 min-w-0 flex-1">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${
                         account.accountType === 'savings' 
                           ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
@@ -527,18 +527,18 @@ const Dashboard: React.FC = () => {
                         <CreditCard className="w-7 h-7 text-white" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center space-x-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <h3 className="font-bold text-gray-900 capitalize truncate text-lg">
                             {account.accountName || `${account.accountType || account.type} Account`}
                           </h3>
                           {account.primary && (
-                            <div className="flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                            <div className="inline-flex flex-shrink-0 items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
                               <Star className="w-3 h-3 mr-1" />
                               Primary
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm text-gray-600 font-mono">
                             {balanceVisible ? account.accountNumber : `••••-••••-••••-${account.accountNumber?.slice(-4) || '••••'}`}
                           </p>
@@ -558,11 +558,11 @@ const Dashboard: React.FC = () => {
                   
                   {/* Balance Section */}
                   <div className="mb-6">
-                    <div className="flex items-baseline space-x-2 mb-1">
-                      <p className="text-3xl font-bold text-gray-900">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
+                      <p className="text-[clamp(1.9rem,3vw,2.15rem)] leading-tight font-bold text-gray-900 break-all sm:break-normal">
                         {balanceVisible ? formatCurrency(account.balance || 0) : '••••••••'}
                       </p>
-                      <div className={`flex items-center text-sm font-medium ${
+                      <div className={`inline-flex items-center text-sm font-medium whitespace-nowrap ${
                         account.balance > 0 ? 'text-emerald-600' : 'text-gray-500'
                       }`}>
                         <TrendingUp className="w-4 h-4 mr-1" />
