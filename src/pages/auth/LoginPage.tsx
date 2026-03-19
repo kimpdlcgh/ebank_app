@@ -69,7 +69,7 @@ const LoginPage: React.FC = () => {
             ) : (
               <div className="w-full h-24 flex items-center justify-center">
                 <img 
-                  src="/sglogo.png"
+                  src="/frbr_logo.png?v=20260319"
                   alt="Logo"
                   className="w-full h-24 object-contain"
                 />

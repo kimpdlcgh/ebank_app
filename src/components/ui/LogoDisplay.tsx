@@ -17,7 +17,7 @@ const LogoDisplay: React.FC<LogoDisplayProps> = ({
   const [currentLogoSrc, setCurrentLogoSrc] = useState('');
   
   // Default static logo path - always available immediately
-  const defaultLogoPath = '/frbr_logo.png';
+  const defaultLogoPath = '/frbr_logo.png?v=20260319';
   
   // Determine which logo to use with priority:
   // 1. Static default logo (immediate, no flickering)

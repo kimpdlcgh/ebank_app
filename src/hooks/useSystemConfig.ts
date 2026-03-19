@@ -3,6 +3,8 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { SystemConfig } from '../types';
 
+const DEFAULT_LOGO_PATH = '/frbr_logo.png?v=20260319';
+
 // Default system configuration
 const defaultConfig: SystemConfig = {
   id: 'main',
@@ -19,7 +21,7 @@ const defaultConfig: SystemConfig = {
   },
   branding: {
     logo: {
-      primary: '/frbr_logo.png', // Your custom logo
+      primary: DEFAULT_LOGO_PATH,
       width: 200,
       height: 60
     },
@@ -201,12 +203,16 @@ export const useSystemConfig = () => {
     const trimmedPath = logoPath?.trim();
 
     if (!trimmedPath) {
-      return '/frbr_logo.png';
+      return DEFAULT_LOGO_PATH;
     }
 
     const normalizedPath = trimmedPath.toLowerCase();
     if (normalizedPath === '/sglogo.png' || normalizedPath === 'sglogo.png') {
-      return '/frbr_logo.png';
+      return DEFAULT_LOGO_PATH;
+    }
+
+    if (normalizedPath === '/frbr_logo.png') {
+      return DEFAULT_LOGO_PATH;
     }
 
     return trimmedPath;
@@ -256,7 +262,7 @@ export const useSystemConfig = () => {
     console.log('🎯 useSystemConfig: getPrimaryLogo called');
     console.log('   - Config loaded:', !loading);
     console.log('   - Logo value:', logo ? `"${logo}"` : 'empty/null');
-    console.log('   - Using default fallback logo:', logo === '/frbr_logo.png');
+    console.log('   - Using default fallback logo:', logo === DEFAULT_LOGO_PATH);
     return logo;
   };
   const getPrimaryColor = () => config.branding.colors.primary;

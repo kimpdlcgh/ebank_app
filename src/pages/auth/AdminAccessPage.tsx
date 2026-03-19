@@ -326,7 +326,7 @@ const AdminAccessPage: React.FC = () => {
               ) : (
                 <div className="w-full h-20 flex items-center justify-center">
                   <img 
-                    src="/frbr_logo.png"
+                    src="/frbr_logo.png?v=20260319"
                     alt="Logo"
                     className="w-full h-20 object-contain"
                   />

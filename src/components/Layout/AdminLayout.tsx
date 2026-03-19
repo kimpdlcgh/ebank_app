@@ -19,19 +19,28 @@ import {
   MessageSquare,
   HelpCircle,
   Globe,
-  Key
+  Key,
+  Bell
 } from 'lucide-react';
 import LogoDisplay from '../ui/LogoDisplay';
 import NotificationCenter from '../admin/NotificationCenter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
 import { UserRole } from '../../types';
+import { AdminPermissionKey, hasAdminPermission } from '../../utils/permissionUtils';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import toast from 'react-hot-toast';
 
 // Admin navigation items
-const adminNavigationItems = [
+const adminNavigationItems: Array<{
+  id: string;
+  label: string;
+  icon: any;
+  path: string;
+  description: string;
+  permission?: AdminPermissionKey;
+}> = [
   { 
     id: 'dashboard', 
     label: 'Dashboard', 
@@ -44,84 +53,112 @@ const adminNavigationItems = [
     label: 'Open Client Account', 
     icon: UserPlus, 
     path: '/admin/client-onboarding',
-    description: 'International client onboarding'
+    description: 'International client onboarding',
+    permission: 'canManageAccounts'
   },
   { 
     id: 'users', 
     label: 'Admin Users', 
     icon: Users, 
     path: '/admin/users',
-    description: 'Manage administrative users'
+    description: 'Manage administrative users',
+    permission: 'canManageUsers'
   },
   { 
     id: 'password-resets', 
     label: 'Password Resets', 
     icon: Key, 
     path: '/admin/password-resets',
-    description: 'Manage password reset requests'
+    description: 'Manage password reset requests',
+    permission: 'canManageUsers'
   },
   { 
     id: 'accounts', 
     label: 'Account Management', 
     icon: CreditCard, 
     path: '/admin/accounts',
-    description: 'Manage accounts'
+    description: 'Manage accounts',
+    permission: 'canManageAccounts'
   },
   { 
     id: 'transactions', 
     label: 'Transactions', 
     icon: Activity, 
     path: '/admin/transactions',
-    description: 'View all transactions'
+    description: 'View all transactions',
+    permission: 'canManageTransactions'
   },
   { 
     id: 'deposits', 
     label: 'Deposit Requests', 
     icon: Plus, 
     path: '/admin/deposits',
-    description: 'Manage deposits'
+    description: 'Manage deposits',
+    permission: 'canManageTransactions'
   },
   { 
     id: 'withdrawals', 
     label: 'Withdrawal Requests', 
     icon: Download, 
     path: '/admin/withdrawals',
-    description: 'Manage withdrawals'
+    description: 'Manage withdrawals',
+    permission: 'canManageTransactions'
   },
   { 
     id: 'support', 
     label: 'Support Requests', 
     icon: MessageSquare, 
     path: '/admin/support',
-    description: 'Manage customer support'
+    description: 'Manage customer support',
+    permission: 'canViewReports'
   },
   { 
     id: 'faqs', 
     label: 'Manage FAQs', 
     icon: HelpCircle, 
     path: '/admin/faqs',
-    description: 'Manage help articles'
+    description: 'Manage help articles',
+    permission: 'canManageSettings'
   },
   { 
     id: 'countries', 
     label: 'Manage Countries', 
     icon: Globe, 
     path: '/admin/countries',
-    description: 'Manage country selections'
+    description: 'Manage country selections',
+    permission: 'canManageSettings'
   },
   { 
     id: 'analytics', 
     label: 'Analytics & Reports', 
     icon: BarChart3, 
     path: '/admin/analytics',
-    description: 'System analytics'
+    description: 'System analytics',
+    permission: 'canViewReports'
+  },
+  { 
+    id: 'notifications', 
+    label: 'Notifications', 
+    icon: Bell, 
+    path: '/admin/notifications',
+    description: 'System alerts',
+    permission: 'canViewReports'
+  },
+  { 
+    id: 'compliance', 
+    label: 'KYC & AML', 
+    icon: Shield, 
+    path: '/admin/compliance',
+    description: 'Compliance review',
+    permission: 'canViewReports'
   },
   { 
     id: 'settings', 
     label: 'System Settings', 
     icon: Settings, 
     path: '/admin/settings',
-    description: 'System configuration'
+    description: 'System configuration',
+    permission: 'canManageSettings'
   }
 ];
 
@@ -137,11 +174,22 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, subtitle }) 
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const matchedNavItem = adminNavigationItems.find(item =>
+    location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path))
+  );
+  const hasPageAccess = !matchedNavItem?.permission || hasAdminPermission(user, matchedNavItem.permission);
+  const userSecurity = (user as any)?.security;
+  const requiresMfa = Boolean(user && (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN) && userSecurity?.twoFactorEnabled);
+  const isMfaVerified = typeof window !== 'undefined' && window.sessionStorage.getItem('adminMfaVerified') === 'true';
+  const hasMfaAccess = !requiresMfa || isMfaVerified;
 
   const handleSignOut = async () => {
     try {
       // Clear any cached data and sign out
       localStorage.clear(); // Clear any cached data
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('adminMfaVerified');
+      }
       await signOut(auth);
       toast.success('Successfully signed out');
       
@@ -198,7 +246,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, subtitle }) 
               ) : (
                 <div className="w-full h-20 flex items-center justify-center">
                   <img 
-                    src="/sglogo.png"
+                    src="/frbr_logo.png?v=20260319"
                     alt="Logo"
                     className="w-full h-20 object-contain"
                   />
@@ -232,11 +280,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, subtitle }) 
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {adminNavigationItems.filter(item => {
-            // Show System Settings only to Super Admins
-            if (item.id === 'settings') {
-              return user?.role === UserRole.SUPER_ADMIN;
+            if (item.id === 'settings' && user?.role !== UserRole.SUPER_ADMIN) {
+              return false;
             }
-            return true;
+            return !item.permission || hasAdminPermission(user, item.permission);
           }).map((item) => {
             const isActive = isActivePage(item.path);
             return (
@@ -337,7 +384,45 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, subtitle }) 
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto">
-          {children}
+          {!hasMfaAccess ? (
+            <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6 m-6">
+              <h2 className="text-lg font-semibold text-slate-900">Two-factor verification required</h2>
+              <p className="text-sm text-slate-600 mt-2">
+                Your admin account requires MFA verification before accessing the console.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => navigate('/admin-access')}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  Verify now
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          ) : hasPageAccess ? (
+            children
+          ) : (
+            <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-xl p-6 m-6">
+              <h2 className="text-lg font-semibold text-slate-900">Access restricted</h2>
+              <p className="text-sm text-slate-600 mt-2">
+                You don’t have permission to access this section. Please contact a super admin.
+              </p>
+              <div className="mt-4">
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  Back to dashboard
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
