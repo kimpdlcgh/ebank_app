@@ -14,9 +14,10 @@ const LogoDisplay: React.FC<LogoDisplayProps> = ({
   className = "" 
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [currentLogoSrc, setCurrentLogoSrc] = useState('');
   
   // Default static logo path - always available immediately
-  const defaultLogoPath = '/sglogo.png';
+  const defaultLogoPath = '/frbr_logo.png';
   
   // Determine which logo to use with priority:
   // 1. Static default logo (immediate, no flickering)
@@ -61,9 +62,16 @@ const LogoDisplay: React.FC<LogoDisplayProps> = ({
   // Reset error state when logoUrl changes
   useEffect(() => {
     setImageError(false);
+    setCurrentLogoSrc(getLogoToDisplay());
   }, [logoUrl]);
 
-  const logoSrc = getLogoToDisplay();
+  useEffect(() => {
+    if (!currentLogoSrc) {
+      setCurrentLogoSrc(getLogoToDisplay());
+    }
+  }, [currentLogoSrc, logoUrl, imageError]);
+
+  const logoSrc = currentLogoSrc || getLogoToDisplay();
   
   // Always show the image (either static default or custom)
   // No flickering since we always have a logo to display
@@ -81,6 +89,12 @@ const LogoDisplay: React.FC<LogoDisplayProps> = ({
         }}
         onError={(e) => {
           console.error('❌ LogoDisplay: Logo failed to load, falling back to icon:', e);
+          if (logoSrc !== defaultLogoPath) {
+            setImageError(true);
+            setCurrentLogoSrc(defaultLogoPath);
+            return;
+          }
+
           setImageError(true);
         }}
       />

@@ -19,7 +19,7 @@ const defaultConfig: SystemConfig = {
   },
   branding: {
     logo: {
-      primary: '/sglogo.png', // Your custom logo
+      primary: '/frbr_logo.png', // Your custom logo
       width: 200,
       height: 60
     },
@@ -237,11 +237,11 @@ export const useSystemConfig = () => {
   // Helper functions for easier access to common config values
   const getCompanyName = () => config.companyInfo.name;
   const getPrimaryLogo = () => {
-    const logo = config.branding.logo.primary || '/sglogo.png'; // Always provide static fallback
+    const logo = config.branding.logo.primary || '/frbr_logo.png'; // Always provide static fallback
     console.log('🎯 useSystemConfig: getPrimaryLogo called');
     console.log('   - Config loaded:', !loading);
     console.log('   - Logo value:', logo ? `"${logo}"` : 'empty/null');
-    console.log('   - Using your custom logo:', logo === '/sglogo.png');
+    console.log('   - Using default fallback logo:', logo === '/frbr_logo.png');
     return logo;
   };
   const getPrimaryColor = () => config.branding.colors.primary;
