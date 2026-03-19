@@ -4,6 +4,7 @@ import { User, Lock, Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
 import LogoDisplay from '../../components/ui/LogoDisplay';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
+import { UserRole } from '../../types';
 import toast from 'react-hot-toast';
 import PasswordResetRequestModal from '../../components/modals/PasswordResetRequestModal';
 
@@ -22,7 +23,12 @@ const ClientLoginPage: React.FC = () => {
   // Redirect if already logged in as client
   React.useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      const userRole = user.role?.toLowerCase();
+      const destination =
+        userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN
+          ? '/admin'
+          : '/dashboard';
+      navigate(destination);
     }
   }, [user, navigate]);
 
@@ -64,7 +70,7 @@ const ClientLoginPage: React.FC = () => {
     
     try {
       // Import Firebase functions for user lookup
-      const { collection, query, where, getDocs } = await import('firebase/firestore');
+      const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
       const { db } = await import('../../config/firebase');
       
       // Check if input is already an email or username
@@ -76,8 +82,9 @@ const ClientLoginPage: React.FC = () => {
         
         try {
           const usersQuery = query(
-            collection(db, 'users'),
-            where('username', '==', formData.username)
+            collection(db, 'users_public'),
+            where('username', '==', formData.username),
+            limit(1)
           );
           
           const querySnapshot = await getDocs(usersQuery);
@@ -104,8 +111,9 @@ const ClientLoginPage: React.FC = () => {
       // Check if this is a temporary password first (for manual resets)
       if (!formData.username.includes('@')) {
         const usersQuery = query(
-          collection(db, 'users'),
-          where('username', '==', formData.username)
+          collection(db, 'users_public'),
+          where('username', '==', formData.username),
+          limit(1)
         );
         const querySnapshot = await getDocs(usersQuery);
         

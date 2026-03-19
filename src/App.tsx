@@ -40,6 +40,8 @@ import ManageCountries from './pages/admin/ManageCountries';
 import ManageFAQs from './pages/admin/ManageFAQs';
 import ManageSupportRequests from './pages/admin/ManageSupportRequests';
 import SystemSettings from './pages/admin/SystemSettings';
+import ComplianceCenter from './pages/admin/ComplianceCenter';
+import AdminNotifications from './pages/admin/AdminNotifications';
 
 // Admin Access
 import AdminAccessPage from './pages/auth/AdminAccessPage';
@@ -118,6 +120,28 @@ const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   return <>{children}</>;
 };
 
+const AdminAccessRoute: React.FC<PublicRouteProps> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user) {
+    const userRole = user.role?.toLowerCase();
+    if (
+      userRole === UserRole.SUPER_ADMIN ||
+      userRole === UserRole.ADMIN ||
+      user.role === UserRole.SUPER_ADMIN ||
+      user.role === UserRole.ADMIN
+    ) {
+      return <Navigate to="/admin" replace />;
+    }
+  }
+
+  return <>{children}</>;
+};
+
 function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -152,9 +176,9 @@ function AppContent() {
         <Route
           path="/admin-access"
           element={
-            <PublicRoute>
+            <AdminAccessRoute>
               <AdminAccessPage />
-            </PublicRoute>
+            </AdminAccessRoute>
           }
         />
         <Route
@@ -348,6 +372,22 @@ function AppContent() {
           element={
             <ProtectedRoute requiredRole={UserRole.ADMIN}>
               <AdminAnalytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/notifications"
+          element={
+            <ProtectedRoute requiredRole={UserRole.ADMIN}>
+              <AdminNotifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/compliance"
+          element={
+            <ProtectedRoute requiredRole={UserRole.ADMIN}>
+              <ComplianceCenter />
             </ProtectedRoute>
           }
         />

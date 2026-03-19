@@ -7,10 +7,12 @@ import {
   sendEmailVerification as firebaseSendEmailVerification,
   updateProfile as firebaseUpdateProfile,
   onAuthStateChanged,
+  User as FirebaseAuthUser,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, UserRole, AuthContextType, SignupForm } from '../types';
+import { normalizeUserRole } from '../utils/roleUtils';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,45 +33,54 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const resolveStoredUserRole = (userData: Partial<User> & { adminProfile?: unknown }) => {
+    const inferredRole = userData.role || (userData.adminProfile ? UserRole.ADMIN : undefined);
+    return normalizeUserRole(inferredRole);
+  };
+
+  const hydrateAuthenticatedUser = async (firebaseUser: FirebaseAuthUser): Promise<User> => {
+    console.log('Fetching user document for UID:', firebaseUser.uid);
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as User;
+      console.log('User document found:', userData);
+      console.log('🆔 USER ID for Admin Creation:', firebaseUser.uid);
+      return {
+        ...userData,
+        uid: firebaseUser.uid,
+        emailVerified: firebaseUser.emailVerified,
+        role: resolveStoredUserRole(userData as Partial<User> & { adminProfile?: unknown }),
+      };
+    }
+
+    console.log('User document not found, creating new one');
+    const newUser: User = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email || '',
+      firstName: firebaseUser.displayName?.split(' ')[0] || '',
+      lastName: firebaseUser.displayName?.split(' ')[1] || '',
+      role: UserRole.CLIENT,
+      emailVerified: firebaseUser.emailVerified,
+      twoFactorEnabled: false,
+      createdAt: new Date() as any,
+      updatedAt: new Date() as any,
+      isActive: true,
+    };
+
+    await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+    return newUser;
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       console.log('Auth state changed:', firebaseUser ? 'User signed in' : 'User signed out');
       
       if (firebaseUser) {
         try {
-          console.log('Fetching user document for UID:', firebaseUser.uid);
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as User;
-            console.log('User document found:', userData);
-            console.log('🆔 USER ID for Admin Creation:', firebaseUser.uid);
-            const updatedUser = {
-              ...userData,
-              uid: firebaseUser.uid,
-              emailVerified: firebaseUser.emailVerified,
-            };
-            setUser(updatedUser);
-            console.log('User state updated:', updatedUser);
-          } else {
-            console.log('User document not found, creating new one');
-            // Create user document if it doesn't exist
-            const newUser: User = {
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || '',
-              firstName: firebaseUser.displayName?.split(' ')[0] || '',
-              lastName: firebaseUser.displayName?.split(' ')[1] || '',
-              role: UserRole.CLIENT,
-              emailVerified: firebaseUser.emailVerified,
-              twoFactorEnabled: false,
-              createdAt: new Date() as any,
-              updatedAt: new Date() as any,
-              isActive: true,
-            };
-            await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-            setUser(newUser);
-            console.log('New user created and state updated:', newUser);
-          }
+          const updatedUser = await hydrateAuthenticatedUser(firebaseUser);
+          setUser(updatedUser);
+          console.log('User state updated:', updatedUser);
         } catch (error: any) {
           console.error('Error fetching user data:', error);
           
@@ -108,17 +119,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
+      setUser(null);
       console.log('Attempting sign in with email:', email);
-      
-      // Clear any cached authentication state
-      if (auth.currentUser) {
-        console.log('Clearing existing auth state before new sign in');
-        await firebaseSignOut(auth);
-      }
-      
+
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const updatedUser = await hydrateAuthenticatedUser(userCredential.user);
+      setUser(updatedUser);
       console.log('Sign in successful for user:', userCredential.user.uid);
+      console.log('User state hydrated after sign in:', updatedUser);
       toast.success('Successfully signed in!');
+      setLoading(false);
     } catch (error: any) {
       console.error('Sign in error:', error);
       let message = 'Failed to sign in';
@@ -159,9 +169,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       toast.error(message);
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -241,6 +250,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Clear user state immediately
       setUser(null);
       setLoading(false);
+
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('adminMfaVerified');
+      }
       
       // Clear Firebase auth
       await firebaseSignOut(auth);
