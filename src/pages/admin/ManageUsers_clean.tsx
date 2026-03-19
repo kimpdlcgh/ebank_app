@@ -269,6 +269,7 @@ const ManageUsers: React.FC = () => {
       const supportEmail = config.contact.email.support || adminEmail;
       
       const emailSubject = encodeURIComponent(`Admin Account Created - ${newUserData.firstName} ${newUserData.lastName}`);
+      const adminPortalUrl = `${window.location.origin}/#/admin-access`;
       const emailBody = encodeURIComponent(`
 Dear ${newUserData.firstName} ${newUserData.lastName},
 
@@ -280,7 +281,7 @@ Temporary Password: ${newUserData.temporaryPassword}
 Role: ${newUserData.role}
 Department: ${newUserData.department}
 
-Admin Portal: [Your Bank URL]/admin-access
+Admin Portal: ${adminPortalUrl}
 
 Please log in at your earliest convenience and change your password for security.
 
@@ -303,7 +304,7 @@ ${config.companyInfo.name} Administration Team
       console.log(`Email: ${newUserData.email}`);
       console.log(`Temporary Password: ${newUserData.temporaryPassword}`);
       console.log(`Role: ${newUserData.role}`);
-      console.log('Admin Portal URL: /admin-access');
+      console.log(`Admin Portal URL: ${adminPortalUrl}`);
       console.log('Please ensure the admin credentials email is sent.');
 
       // Show final success message

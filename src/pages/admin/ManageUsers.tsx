@@ -400,6 +400,7 @@ const ManageUsers: React.FC = () => {
       // 3. Generate email with admin credentials
       const adminEmail = getContactEmail();
       const supportEmail = config.contact.email.support || adminEmail;
+      const adminPortalUrl = `${window.location.origin}/#/admin-access`;
       
       const emailSubject = encodeURIComponent(`Admin Account Created - ${newUserData.firstName} ${newUserData.lastName}`);
       const emailBody = encodeURIComponent(`
@@ -413,7 +414,7 @@ Temporary Password: ${newUserData.temporaryPassword}
 Role: ${newUserData.role}
 Department: ${newUserData.department}
 
-Admin Portal: [Your Bank URL]/admin-access
+Admin Portal: ${adminPortalUrl}
 
 Please log in at your earliest convenience and change your password for security.
 
@@ -453,7 +454,7 @@ ${config.companyInfo.name} Administration Team
       console.log(`Email: ${newUserData.email}`);
       console.log(`Temporary Password: ${newUserData.temporaryPassword}`);
       console.log(`Role: ${newUserData.role}`);
-      console.log('Admin Portal URL: /admin-access');
+      console.log(`Admin Portal URL: ${adminPortalUrl}`);
       console.log('Please ensure the admin credentials email is sent.');
 
       // Show final success message

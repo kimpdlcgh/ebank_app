@@ -359,6 +359,7 @@ const ClientAccountOpening: React.FC = () => {
     try {
       // Create email service instance
       const emailService = new ClientAccountEmailService(config);
+      const clientPortalUrl = `${window.location.origin}/#/client-login`;
       
       // Prepare email variables
       const emailVariables = {
@@ -369,7 +370,7 @@ const ClientAccountOpening: React.FC = () => {
         username: clientData.username,
         temporaryPassword: clientData.temporaryPassword,
         accountNumber: accountNumber,
-        clientPortalUrl: `${window.location.origin}/client-login`, // Dedicated client portal
+        clientPortalUrl,
         supportEmail: config?.contact?.email?.support || config?.contact?.email?.primary || 'support@sgfintech.com',
         supportPhone: config?.contact?.phone?.support || config?.contact?.phone?.primary || '(555) 123-BANK',
         companyName: config?.companyInfo?.name || 'SG FINTECH LLC',
@@ -400,7 +401,7 @@ const ClientAccountOpening: React.FC = () => {
       
       // Fallback to simple email if service fails
       const fallbackSubject = `Welcome to ${config?.companyInfo?.name || 'SG FINTECH LLC'} - Account Created`;
-      const fallbackBody = `Dear ${clientData.firstName} ${clientData.lastName},\n\nYour account has been created successfully.\n\nLogin: ${clientData.username}\nPassword: ${clientData.temporaryPassword}\nPortal: ${window.location.origin}/client-login\n\nThank you!`;
+      const fallbackBody = `Dear ${clientData.firstName} ${clientData.lastName},\n\nYour account has been created successfully.\n\nLogin: ${clientData.username}\nPassword: ${clientData.temporaryPassword}\nPortal: ${window.location.origin}/#/client-login\n\nThank you!`;
       const fallbackMailto = `mailto:${clientData.email}?subject=${encodeURIComponent(fallbackSubject)}&body=${encodeURIComponent(fallbackBody)}`;
       window.open(fallbackMailto, '_blank');
     }

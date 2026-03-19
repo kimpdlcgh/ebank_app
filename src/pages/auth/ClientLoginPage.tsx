@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { User, Lock, Eye, EyeOff, ArrowLeft, Shield } from 'lucide-react';
 import LogoDisplay from '../../components/ui/LogoDisplay';
 import { useAuth } from '../../contexts/AuthContext';
@@ -10,6 +10,7 @@ import PasswordResetRequestModal from '../../components/modals/PasswordResetRequ
 
 const ClientLoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { signIn, user } = useAuth();
   const { getCompanyName, getPrimaryLogo, loading: configLoading } = useSystemConfigContext();
   const [showPassword, setShowPassword] = useState(false);
@@ -28,14 +29,13 @@ const ClientLoginPage: React.FC = () => {
         userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN
           ? '/admin'
           : '/dashboard';
-      navigate(destination);
+      navigate(destination, { replace: true });
     }
   }, [user, navigate]);
 
   // Check for password reset success message
   React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const message = urlParams.get('message');
+    const message = searchParams.get('message');
     
     if (message === 'password-reset-success') {
       toast.success('Password changed successfully! You can now sign in with your new password.', {
@@ -45,11 +45,10 @@ const ClientLoginPage: React.FC = () => {
           color: '#ffffff',
         },
       });
-      
-      // Clean up the URL
-      window.history.replaceState({}, document.title, '/client-login');
+
+      setSearchParams({}, { replace: true });
     }
-  }, []);
+  }, [searchParams, setSearchParams]);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData(prev => ({
