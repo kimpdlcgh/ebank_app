@@ -95,7 +95,7 @@ const AdminAccessPage: React.FC = () => {
     let secondaryApp: any = null;
     try {
       const { createUserWithEmailAndPassword, getAuth, signOut } = await import('firebase/auth');
-      const { collection, doc, getDocs, getFirestore, limit, query, serverTimestamp, setDoc, where } = await import('firebase/firestore');
+      const { collection, doc, getDocsFromServer, getFirestore, limit, query, serverTimestamp, setDoc, where } = await import('firebase/firestore');
       const { app, db } = await import('../../config/firebase');
       const { deleteApp, getApps, initializeApp } = await import('firebase/app');
 
@@ -107,7 +107,7 @@ const AdminAccessPage: React.FC = () => {
           where('role', 'in', [UserRole.ADMIN, UserRole.SUPER_ADMIN]),
           limit(1)
         );
-        const existingAdmins = await getDocs(existingAdminQuery);
+        const existingAdmins = await getDocsFromServer(existingAdminQuery);
 
         if (!existingAdmins.empty) {
           toast.error('Admin account creation is disabled. Contact an existing admin.');
