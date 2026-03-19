@@ -154,7 +154,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
         
         // Redirect to login after a short delay
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = '/#/client-login';
         }, 2000);
       } else {
         console.log('SecuritySettings: Password change failed');

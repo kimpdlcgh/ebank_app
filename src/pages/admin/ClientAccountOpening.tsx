@@ -1754,7 +1754,7 @@ const ClientAccountOpening: React.FC = () => {
               </button>
             ) : (
               <button
-                onClick={() => window.location.href = '/admin/users'}
+                onClick={() => window.location.href = '/#/admin/users'}
                 className="flex items-center px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 View All Clients

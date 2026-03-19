@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:prod": "NODE_ENV=production tsc -b && vite build --mode production",
+    "build": "node ./node_modules/typescript/bin/tsc -b && node ./node_modules/vite/bin/vite.js build",
+    "build:prod": "NODE_ENV=production node ./node_modules/typescript/bin/tsc -b && node ./node_modules/vite/bin/vite.js build --mode production",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "preview": "vite preview",

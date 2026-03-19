@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { Bell, X, Eye, Clock, AlertCircle } from 'lucide-react';
@@ -14,13 +14,23 @@ interface SupportNotification {
   type: 'new_request' | 'escalation' | 'update';
 }
 
+interface AdminNotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  read: boolean;
+  type: 'admin';
+}
+
 interface NotificationCenterProps {
   className?: string;
 }
 
 const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' }) => {
   const { user } = useAuth();
-  const [notifications, setNotifications] = useState<SupportNotification[]>([]);
+  const [notifications, setNotifications] = useState<(SupportNotification | AdminNotificationItem)[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -28,7 +38,16 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
   useEffect(() => {
     if (!user) return;
 
-    // Listen for new support requests (for real-time notifications)
+    const formatTimestamp = (value: any) => {
+      if (!value) return new Date().toISOString();
+      if (value?.toDate) return value.toDate().toISOString();
+      if (typeof value === 'number' || typeof value === 'string') {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+      }
+      return new Date().toISOString();
+    };
+
     const supportRequestsQuery = query(
       collection(db, 'support_requests'),
       where('status', '==', 'new'),
@@ -36,45 +55,72 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
       limit(10)
     );
 
-    const unsubscribe = onSnapshot(supportRequestsQuery, (snapshot) => {
-      const newNotifications: SupportNotification[] = [];
-      
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'added') {
-          const data = change.doc.data();
-          const notification: SupportNotification = {
-            id: change.doc.id,
+    const adminNotificationsQuery = query(
+      collection(db, 'admin_notifications'),
+      orderBy('timestamp', 'desc'),
+      limit(10)
+    );
+
+    const fetchNotifications = async () => {
+      try {
+        const [supportSnapshot, adminSnapshot] = await Promise.all([
+          getDocs(supportRequestsQuery),
+          getDocs(adminNotificationsQuery)
+        ]);
+
+        const supportItems: SupportNotification[] = supportSnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
             ticketId: data.ticketId,
             subject: data.subject,
             priority: data.priority,
-            timestamp: data.timestamp,
+            timestamp: formatTimestamp(data.timestamp),
             read: false,
             type: 'new_request'
           };
-          newNotifications.push(notification);
-        }
-      });
+        });
 
-      if (newNotifications.length > 0) {
-        setNotifications(prev => [...newNotifications, ...prev]);
-        setUnreadCount(prev => prev + newNotifications.length);
-        
-        // Show browser notification if supported
-        if ('Notification' in window && Notification.permission === 'granted') {
-          newNotifications.forEach(notification => {
-            new Notification(`New Support Request: ${notification.ticketId}`, {
-              body: notification.subject,
-              icon: '/favicon.ico',
-              tag: notification.id
-            });
+        const adminItems: AdminNotificationItem[] = adminSnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            message: data.message,
+            priority: data.priority,
+            timestamp: formatTimestamp(data.timestamp),
+            read: Boolean(data.read),
+            type: 'admin'
+          };
+        });
+
+        const merged = [...supportItems, ...adminItems]
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+          .slice(0, 20);
+
+        setNotifications(prev => {
+          const prevMap = new Map(prev.map(item => [item.id, item]));
+          const mergedWithRead = merged.map(item => {
+            if (item.type === 'admin') return item;
+            return {
+              ...item,
+              read: (prevMap.get(item.id)?.read as boolean | undefined) ?? false
+            };
           });
-        }
+          setUnreadCount(mergedWithRead.filter(item => !item.read).length);
+          return mergedWithRead;
+        });
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    fetchNotifications();
+    const intervalId = window.setInterval(fetchNotifications, 30000);
+
+    return () => window.clearInterval(intervalId);
   }, [user]);
 
   // Request notification permission on component mount
@@ -212,6 +258,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
               <div className="py-2">
                 {notifications.map((notification) => {
                   const PriorityIcon = getPriorityIcon(notification.priority);
+                  const notificationTitle =
+                    notification.type === 'admin'
+                      ? (notification as AdminNotificationItem).title
+                      : (notification as SupportNotification).ticketId;
+                  const notificationMessage =
+                    notification.type === 'admin'
+                      ? (notification as AdminNotificationItem).message
+                      : (notification as SupportNotification).subject;
                   
                   return (
                     <div
@@ -232,14 +286,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium text-sm text-gray-900">
-                                {notification.ticketId}
+                                {notificationTitle}
                               </span>
                               {!notification.read && (
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                               )}
                             </div>
                             <p className="text-sm text-gray-600 truncate mt-1">
-                              {notification.subject}
+                              {notificationMessage}
                             </p>
                             <p className="text-xs text-gray-500 mt-1">
                               {formatTimeAgo(notification.timestamp)}
@@ -287,7 +341,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ className = '' 
                 onClick={() => {
                   setIsOpen(false);
                   // Navigate to support requests page
-                  window.location.href = '/admin/support';
+                  window.location.href = '/#/admin/support';
                 }}
                 className="text-sm text-blue-600 hover:text-blue-800 font-medium"
               >

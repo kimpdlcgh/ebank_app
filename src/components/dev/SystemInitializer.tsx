@@ -402,7 +402,7 @@ const SystemInitializer: React.FC = () => {
           </div>
           <div className="space-y-2">
             <Button 
-              onClick={() => window.location.href = '/admin-access'}
+              onClick={() => window.location.href = '/#/admin-access'}
               className="w-full"
             >
               Go to Admin Login
