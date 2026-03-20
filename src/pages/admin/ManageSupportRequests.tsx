@@ -27,8 +27,10 @@ import {
   onSnapshot, 
   doc, 
   updateDoc,
+  addDoc,
   Timestamp 
 } from 'firebase/firestore';
+import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 interface SupportRequest {
@@ -59,6 +61,10 @@ const ManageSupportRequests: React.FC = () => {
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
   const [quickActionsModalOpen, setQuickActionsModalOpen] = useState(false);
   const [quickActionsRequest, setQuickActionsRequest] = useState<SupportRequest | null>(null);
+  const [responseText, setResponseText] = useState('');
+  const [sendingResponse, setSendingResponse] = useState(false);
+  const [selectedRequestResponses, setSelectedRequestResponses] = useState<any[]>([]);
+  const { user: adminUser } = useAuth();
 
   useEffect(() => {
     // Real-time listener for support requests
@@ -86,6 +92,22 @@ const ManageSupportRequests: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // Load responses when a request is selected
+  useEffect(() => {
+    if (!selectedRequest?.id) {
+      setSelectedRequestResponses([]);
+      return;
+    }
+    const responsesRef = collection(db, 'support_requests', selectedRequest.id, 'responses');
+    const q = query(responsesRef, orderBy('timestamp', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setSelectedRequestResponses(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => {
+      setSelectedRequestResponses([]);
+    });
+    return () => unsubscribe();
+  }, [selectedRequest?.id]);
+
   const openQuickActions = (request: SupportRequest) => {
     setQuickActionsRequest(request);
     setQuickActionsModalOpen(true);
@@ -95,6 +117,38 @@ const ManageSupportRequests: React.FC = () => {
     // The real-time listener will automatically update the UI
     setQuickActionsModalOpen(false);
     setQuickActionsRequest(null);
+  };
+
+  const handleSendResponse = async () => {
+    if (!selectedRequest || !responseText.trim()) return;
+    setSendingResponse(true);
+    try {
+      await addDoc(collection(db, 'support_requests', selectedRequest.id, 'responses'), {
+        message: responseText.trim(),
+        respondent: {
+          uid: adminUser?.uid || '',
+          name: adminUser?.firstName
+            ? `${adminUser.firstName} ${adminUser.lastName}`
+            : adminUser?.email || 'Admin',
+          email: adminUser?.email || ''
+        },
+        timestamp: new Date().toISOString(),
+        isPublic: true,
+        type: 'admin_response'
+      });
+      await updateDoc(doc(db, 'support_requests', selectedRequest.id), {
+        status: 'in-progress',
+        responseCount: (selectedRequest.responseCount || 0) + 1,
+        lastResponseAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+      setResponseText('');
+      toast.success('Response sent successfully');
+    } catch (error) {
+      toast.error('Failed to send response');
+    } finally {
+      setSendingResponse(false);
+    }
   };
 
   const handleStatusUpdate = async (requestId: string, newStatus: string) => {
@@ -381,7 +435,7 @@ const ManageSupportRequests: React.FC = () => {
                   <p className="text-sm text-gray-500 mt-1">{selectedRequest.category}</p>
                 </div>
                 <button
-                  onClick={() => setSelectedRequest(null)}
+                  onClick={() => { setSelectedRequest(null); setResponseText(''); }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   <ExternalLink className="w-5 h-5 text-gray-500 transform rotate-45" />
@@ -429,6 +483,51 @@ const ManageSupportRequests: React.FC = () => {
                 <div>
                   <label className="text-sm font-medium text-gray-500">Submitted</label>
                   <p className="text-gray-900 mt-1">{formatDate(selectedRequest.timestamp)}</p>
+                </div>
+
+                {/* Previous Responses */}
+                {selectedRequestResponses.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Response History</label>
+                    <div className="mt-2 space-y-3">
+                      {selectedRequestResponses.map((resp) => (
+                        <div key={resp.id} className="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs font-medium text-blue-800">
+                              {resp.respondent?.name || 'Admin'}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {resp.timestamp ? new Date(resp.timestamp).toLocaleString() : ''}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap">{resp.message}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add Response */}
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Send Response to Customer</label>
+                  <textarea
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    placeholder="Type your response to the customer..."
+                    rows={4}
+                    className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  />
+                  <Button
+                    onClick={handleSendResponse}
+                    disabled={sendingResponse || !responseText.trim()}
+                    className="mt-2 w-full"
+                  >
+                    {sendingResponse ? (
+                      <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>Sending...</>
+                    ) : (
+                      <><Mail className="w-4 h-4 mr-2" />Send Response</>
+                    )}
+                  </Button>
                 </div>
 
                 <div className="flex space-x-3">

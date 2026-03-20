@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import ContactSupportModal from '../../components/modals/ContactSupportModal';
+import { useAuth } from '../../contexts/AuthContext';
 import { db } from '../../config/firebase';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
 import { 
   MessageCircle, 
   Phone, 
@@ -24,6 +25,19 @@ import {
   Info
 } from 'lucide-react';
 
+interface SupportTicket {
+  id: string;
+  ticketId: string;
+  subject: string;
+  category: string;
+  priority: string;
+  message: string;
+  status: 'new' | 'in-progress' | 'resolved' | 'closed';
+  timestamp: string;
+  responseCount?: number;
+  lastResponseAt?: string;
+}
+
 interface FAQ {
   id: string;
   question: string;
@@ -40,8 +54,70 @@ const HelpSupport: React.FC = () => {
   const [selectedContactMethod, setSelectedContactMethod] = useState<string>('');
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
+  const [myTickets, setMyTickets] = useState<SupportTicket[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(true);
+  const { user } = useAuth();
 
   // Load FAQs from Firestore
+    // Load user's support tickets
+    useEffect(() => {
+      if (!user?.uid) {
+        setTicketsLoading(false);
+        return;
+      }
+      const q = query(
+        collection(db, 'support_requests'),
+        where('user.uid', '==', user.uid),
+        orderBy('timestamp', 'desc')
+      );
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const tickets: SupportTicket[] = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as SupportTicket));
+        setMyTickets(tickets);
+        setTicketsLoading(false);
+      }, () => {
+        setTicketsLoading(false);
+      });
+      return () => unsubscribe();
+    }, [user?.uid]);
+
+    const getContactModalProps = useCallback((method: string) => {
+      switch (method) {
+        case 'phone':
+          return { defaultSubject: 'Callback Request', initialContactMethod: 'phone', defaultCategory: 'general' };
+        case 'email':
+          return { defaultSubject: 'Email Support Request', initialContactMethod: 'email', defaultCategory: 'general' };
+        case 'urgent':
+          return { defaultSubject: 'Urgent Issue', defaultPriority: 'critical', defaultCategory: 'general' };
+        case 'general':
+          return { defaultCategory: 'general' as const };
+        case 'chat':
+        default:
+          return { defaultSubject: 'Live Chat Support Request', initialContactMethod: 'email' };
+      }
+    }, []);
+
+    const getTicketStatusColor = (status: string) => {
+      switch (status) {
+        case 'new': return 'bg-blue-100 text-blue-800';
+        case 'in-progress': return 'bg-yellow-100 text-yellow-800';
+        case 'resolved': return 'bg-green-100 text-green-800';
+        case 'closed': return 'bg-gray-100 text-gray-800';
+        default: return 'bg-gray-100 text-gray-800';
+      }
+    };
+
+    const getTicketStatusLabel = (status: string) => {
+      switch (status) {
+        case 'new': return 'New';
+        case 'in-progress': return 'In Progress';
+        case 'resolved': return 'Resolved';
+        case 'closed': return 'Closed';
+        default: return status;
+      }
+    };
   useEffect(() => {
     const q = query(
       collection(db, 'faqs'),
@@ -332,8 +408,77 @@ const HelpSupport: React.FC = () => {
             setContactModalOpen(false);
             setSelectedContactMethod('');
           }}
+          {...getContactModalProps(selectedContactMethod)}
         />
       )}
+            {/* My Support Tickets */}
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">My Support Tickets</h3>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSelectedContactMethod('general');
+                    setContactModalOpen(true);
+                  }}
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  New Ticket
+                </Button>
+              </div>
+
+              {ticketsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-500 text-sm">Loading your tickets...</p>
+                </div>
+              ) : myTickets.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <FileText className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                  <p className="text-sm">No support tickets yet.</p>
+                  <p className="text-xs mt-1 text-gray-400">Submit a request above and it will appear here.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Ticket #</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Subject</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Date</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-600">Responses</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {myTickets.map((ticket) => (
+                        <tr key={ticket.id} className="hover:bg-gray-50">
+                          <td className="py-3 px-4 font-mono text-blue-600">#{ticket.ticketId}</td>
+                          <td className="py-3 px-4 text-gray-900 max-w-xs truncate">{ticket.subject}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getTicketStatusColor(ticket.status)}`}>
+                              {getTicketStatusLabel(ticket.status)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-gray-500 whitespace-nowrap">
+                            {new Date(ticket.timestamp).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-4 text-gray-500">
+                            {ticket.responseCount && ticket.responseCount > 0 ? (
+                              <span className="text-green-600 font-medium">{ticket.responseCount} response{ticket.responseCount > 1 ? 's' : ''}</span>
+                            ) : (
+                              <span className="text-gray-400">Awaiting reply</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+
+            {/* Additional Resources */}
     </DashboardLayout>
   );
 };

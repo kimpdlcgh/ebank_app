@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
+import { useAuth } from '../../contexts/AuthContext';
 import { X, CheckCircle, Clock, AlertTriangle, XCircle, Users, Mail } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -44,6 +45,7 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
   const [assignedTo, setAssignedTo] = useState(request.assignedTo || '');
   const [notes, setNotes] = useState('');
   const [priority, setPriority] = useState(request.priority);
+  const { user: adminUser } = useAuth();
 
   if (!isOpen) return null;
 
@@ -114,7 +116,10 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
 
       switch (action) {
         case 'assign-to-me':
-          updates.assignedTo = 'current-admin-id'; // Replace with actual admin ID
+          updates.assignedTo = adminUser?.uid || 'admin';
+          updates.assignedToName = adminUser?.firstName
+            ? `${adminUser.firstName} ${adminUser.lastName}`
+            : adminUser?.email || 'Admin';
           updates.status = 'in-progress';
           toast.success('Request assigned to you');
           break;
@@ -128,8 +133,12 @@ const QuickActionsModal: React.FC<QuickActionsModalProps> = ({
           toast.success('Request marked as resolved');
           break;
         case 'send-email':
-          // This would integrate with your email system
-          toast.success('Email notification sent to customer');
+          const emailSubject = encodeURIComponent(`Re: ${request.subject} [#${request.ticketId}]`);
+          const emailBody = encodeURIComponent(
+            `Dear ${request.user.name},\n\nThank you for contacting our support team regarding your request:\n"${request.subject}" (Ticket #${request.ticketId})\n\nWe are looking into your request and will get back to you shortly.\n\nBest regards,\nCustomer Support Team`
+          );
+          window.open(`mailto:${request.user.email}?subject=${emailSubject}&body=${emailBody}`, '_blank');
+          toast.success('Email client opened');
           return; // Don't update the document for email actions
       }
 

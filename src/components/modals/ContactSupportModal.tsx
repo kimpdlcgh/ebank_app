@@ -18,22 +18,28 @@ interface ContactSupportModalProps {
   defaultSubject?: string;
   /** Default category for the support request */
   defaultCategory?: string;
+  /** Pre-select contact method: 'email' | 'phone' */
+  initialContactMethod?: string;
+  /** Pre-select priority: 'low' | 'medium' | 'high' | 'critical' */
+  defaultPriority?: string;
 }
 
 const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
   isOpen,
   onClose,
   defaultSubject = '',
-  defaultCategory = 'account_opening'
+  defaultCategory = 'account_opening',
+  initialContactMethod = '',
+  defaultPriority = 'medium'
 }) => {
   const { user } = useAuth();
   const { config, getContactEmail } = useSystemConfigContext();
   const [formData, setFormData] = useState({
     subject: defaultSubject,
     category: defaultCategory,
-    priority: 'medium',
+    priority: defaultPriority || 'medium',
     message: '',
-    contactMethod: 'email'
+    contactMethod: initialContactMethod === 'phone' ? 'phone' : 'email'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -44,10 +50,12 @@ const ContactSupportModal: React.FC<ContactSupportModalProps> = ({
       setFormData(prev => ({
         ...prev,
         subject: defaultSubject,
-        category: defaultCategory
+        category: defaultCategory,
+        priority: defaultPriority || prev.priority,
+        contactMethod: initialContactMethod === 'phone' ? 'phone' : (initialContactMethod ? 'email' : prev.contactMethod)
       }));
     }
-  }, [isOpen, defaultSubject, defaultCategory]);
+  }, [isOpen, defaultSubject, defaultCategory, initialContactMethod, defaultPriority]);
 
   const categories = [
     { value: 'account_opening', label: 'Account Opening' },
@@ -177,9 +185,9 @@ ${autoReplyUrl ? '\n📧 Auto-reply email prepared. Check your email client for 
     setFormData({
       subject: defaultSubject,
       category: defaultCategory,
-      priority: 'medium',
+      priority: defaultPriority || 'medium',
       message: '',
-      contactMethod: 'email'
+      contactMethod: initialContactMethod === 'phone' ? 'phone' : 'email'
     });
     setIsSubmitted(false);
     setIsSubmitting(false);

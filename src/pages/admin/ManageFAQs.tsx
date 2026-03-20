@@ -97,8 +97,6 @@ const ManageFAQs: React.FC = () => {
       setLoading(false);
     }, (error) => {
       console.error('Error fetching FAQs:', error);
-      // If collection doesn't exist or is empty, initialize with default FAQs
-      initializeDefaultFAQs();
       setLoading(false);
     });
 
@@ -226,6 +224,14 @@ const ManageFAQs: React.FC = () => {
       console.error('Error updating FAQ status:', error);
       toast.error('Failed to update FAQ status');
     }
+  };
+
+  const formatTimestamp = (timestamp: any): string => {
+    if (!timestamp) return 'N/A';
+    if (typeof timestamp === 'string') return new Date(timestamp).toLocaleDateString();
+    if (timestamp?.toDate) return timestamp.toDate().toLocaleDateString();
+    if (timestamp?.seconds) return new Date(timestamp.seconds * 1000).toLocaleDateString();
+    return 'N/A';
   };
 
   const resetForm = () => {
@@ -447,9 +453,9 @@ const ManageFAQs: React.FC = () => {
                         
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           <span>Order: {faq.order}</span>
-                          <span>Created: {new Date(faq.createdAt).toLocaleDateString()}</span>
+                          <span>Created: {formatTimestamp(faq.createdAt)}</span>
                           {faq.updatedAt && (
-                            <span>Updated: {new Date(faq.updatedAt).toLocaleDateString()}</span>
+                            <span>Updated: {formatTimestamp(faq.updatedAt)}</span>
                           )}
                         </div>
                       </div>
