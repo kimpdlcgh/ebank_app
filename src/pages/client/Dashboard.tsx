@@ -118,6 +118,21 @@ const Dashboard: React.FC = () => {
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
 
+  const getAccountStatus = (account: any) => {
+    return String(account?.status ?? (account?.isActive ? 'active' : 'inactive')).toLowerCase();
+  };
+
+  const isAccountFullyActive = (account: any) => {
+    const status = getAccountStatus(account);
+    if (status === 'inactive' || status === 'pending' || status === 'pending_approval') {
+      return false;
+    }
+    if (account?.isActive === false) {
+      return false;
+    }
+    return status === 'active' || account?.isActive === true;
+  };
+
   // Load real account data from Firestore with real-time updates
   useEffect(() => {
     if (!user) return;
@@ -153,17 +168,23 @@ const Dashboard: React.FC = () => {
             
             console.log('Dashboard: ✅ Real-time Firestore accounts updated:', userAccounts);
             setAccounts(userAccounts);
-            
-            // Update selected account if it was modified
-            if (selectedAccount) {
-              const updatedSelected = userAccounts.find(acc => acc.id === selectedAccount.id);
-              if (updatedSelected) {
-                console.log('Dashboard: 📝 Selected account updated:', updatedSelected);
-                setSelectedAccount(updatedSelected);
+
+            // Keep the current selection if it still exists; otherwise fall back to first account.
+            setSelectedAccount((prevSelected: any) => {
+              if (!userAccounts.length) {
+                return null;
               }
-            } else if (userAccounts.length > 0) {
-              setSelectedAccount(userAccounts[0]);
-            }
+
+              if (prevSelected?.id) {
+                const updatedSelected = userAccounts.find(acc => acc.id === prevSelected.id);
+                if (updatedSelected) {
+                  console.log('Dashboard: 📝 Selected account updated:', updatedSelected);
+                  return updatedSelected;
+                }
+              }
+
+              return userAccounts[0];
+            });
           } else {
             console.log('Dashboard: ❌ No accounts found for user - contact support needed');
             setAccounts([]);
@@ -221,6 +242,12 @@ const Dashboard: React.FC = () => {
   };
 
   const totalBalance = accounts.reduce((sum: number, account: any) => sum + (account?.balance || 0), 0);
+  const hasActiveAccount = accounts.some((account: any) => isAccountFullyActive(account));
+  const selectedAccountCanTransact = hasActiveAccount;
+
+  const showActivationRequiredNotice = () => {
+    toast.error('Activate your account to enable this function');
+  };
 
   // Show loading screen while SystemConfig is loading
   if (configLoading) {
@@ -298,7 +325,28 @@ const Dashboard: React.FC = () => {
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
+              const isMoneyAction = item.id === 'transfer' || item.id === 'deposit' || item.id === 'withdraw';
+              const isDisabled = isMoneyAction && !selectedAccountCanTransact;
               
+              if (isDisabled) {
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={showActivationRequiredNotice}
+                    className="group flex w-full items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed"
+                    title="Available once your account is fully active"
+                  >
+                    <Icon className="mr-4 w-5 h-5 text-gray-400" />
+                    <div className="flex-1 text-left">
+                      <div className="font-medium">{item.label}</div>
+                      <div className="text-xs text-gray-400">Account activation required</div>
+                    </div>
+                    <Lock className="w-4 h-4 text-gray-400" />
+                  </button>
+                );
+              }
+
               return (
                 <Link
                   key={item.id}
@@ -417,27 +465,63 @@ const Dashboard: React.FC = () => {
               
               {/* Quick Actions */}
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <Link
-                  to="/deposit"
-                  className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
-                >
-                  <Plus className="w-5 h-5 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium">Deposit</span>
-                </Link>
-                <Link
-                  to="/withdraw"
-                  className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
-                >
-                  <Download className="w-5 h-5 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium">Withdraw</span>
-                </Link>
-                <Link
-                  to="/transfer"
-                  className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
-                >
-                  <Send className="w-5 h-5 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-medium">Transfer</span>
-                </Link>
+                {selectedAccountCanTransact ? (
+                  <Link
+                    to="/deposit"
+                    className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
+                  >
+                    <Plus className="w-5 h-5 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-medium">Deposit</span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={showActivationRequiredNotice}
+                    className="bg-blue-800 bg-opacity-40 rounded-lg p-3 text-center cursor-not-allowed"
+                    title="Available once your account is fully active"
+                  >
+                    <Lock className="w-5 h-5 mx-auto mb-1" />
+                    <span className="text-xs font-medium">Deposit</span>
+                  </button>
+                )}
+                {selectedAccountCanTransact ? (
+                  <Link
+                    to="/withdraw"
+                    className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
+                  >
+                    <Download className="w-5 h-5 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-medium">Withdraw</span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={showActivationRequiredNotice}
+                    className="bg-blue-800 bg-opacity-40 rounded-lg p-3 text-center cursor-not-allowed"
+                    title="Available once your account is fully active"
+                  >
+                    <Lock className="w-5 h-5 mx-auto mb-1" />
+                    <span className="text-xs font-medium">Withdraw</span>
+                  </button>
+                )}
+                {selectedAccountCanTransact ? (
+                  <Link
+                    to="/transfer"
+                    className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
+                  >
+                    <Send className="w-5 h-5 mx-auto mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-medium">Transfer</span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={showActivationRequiredNotice}
+                    className="bg-blue-800 bg-opacity-40 rounded-lg p-3 text-center cursor-not-allowed"
+                    title="Available once your account is fully active"
+                  >
+                    <Lock className="w-5 h-5 mx-auto mb-1" />
+                    <span className="text-xs font-medium">Transfer</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setShowSecuritySettings(true)}
                   className="bg-blue-500 hover:bg-blue-400 rounded-lg p-3 text-center transition-colors group"
@@ -704,18 +788,27 @@ const Dashboard: React.FC = () => {
                         <h4 className="text-lg font-semibold text-gray-900 mb-2">No Transactions Yet</h4>
                         <p className="text-gray-600 mb-6 max-w-md mx-auto">Start your financial journey by making your first transaction. Transfer funds, make deposits, or explore our services.</p>
                         <div className="flex items-center justify-center space-x-3">
-                          <Link
-                            to="/transfer"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-                          >
-                            Transfer Money
-                          </Link>
-                          <Link
-                            to="/deposit"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
-                          >
-                            Make Deposit
-                          </Link>
+                          {selectedAccountCanTransact ? (
+                            <>
+                              <Link
+                                to="/transfer"
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                              >
+                                Transfer Money
+                              </Link>
+                              <Link
+                                to="/deposit"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                              >
+                                Make Deposit
+                              </Link>
+                            </>
+                          ) : (
+                            <div className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
+                              <Lock className="w-4 h-4 mr-2" />
+                              Transfers and funding unlock after account activation
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

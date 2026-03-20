@@ -42,6 +42,19 @@ const TransferFunds: React.FC = () => {
   const [savedRecipients, setSavedRecipients] = useState<any[]>([]);
   const [recipientsLoading, setRecipientsLoading] = useState(true);
 
+  const isAccountFullyActive = (account: any) => {
+    const status = String(account?.status ?? (account?.isActive ? 'active' : 'inactive')).toLowerCase();
+    if (status === 'inactive' || status === 'pending' || status === 'pending_approval') {
+      return false;
+    }
+    if (account?.isActive === false) {
+      return false;
+    }
+    return status === 'active' || account?.isActive === true;
+  };
+
+  const activeAccounts = (userAccounts || []).filter((account: any) => isAccountFullyActive(account));
+
   // New recipient form
   const [newRecipient, setNewRecipient] = useState({
     name: '',
@@ -60,10 +73,14 @@ const TransferFunds: React.FC = () => {
 
   // Set default account when user accounts load
   useEffect(() => {
-    if (userAccounts && userAccounts.length > 0 && !fromAccount) {
-      setFromAccount(userAccounts[0].id || userAccounts[0].accountType || 'checking');
+    const selectedStillActive = activeAccounts.some(
+      (account: any) => (account.id || account.accountType) === fromAccount
+    );
+
+    if (activeAccounts.length > 0 && (!fromAccount || !selectedStillActive)) {
+      setFromAccount(activeAccounts[0].id || activeAccounts[0].accountType || 'checking');
     }
-  }, [userAccounts, fromAccount]);
+  }, [activeAccounts, fromAccount]);
 
   // Load user's saved recipients from Firebase
   useEffect(() => {
@@ -255,6 +272,20 @@ const TransferFunds: React.FC = () => {
     );
   }
 
+  if (activeAccounts.length === 0) {
+    return (
+      <DashboardLayout title="Transfer Money" subtitle="Send money to friends, family, or other accounts">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-8 text-center">
+            <h3 className="text-lg font-semibold text-amber-900 mb-2">Account Activation Required</h3>
+            <p className="text-amber-700 mb-4">Transfers are unavailable while your account status is Inactive or Pending.</p>
+            <p className="text-sm text-amber-700">This page unlocks automatically once your account becomes fully active.</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   const renderRecipientSelection = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -372,7 +403,7 @@ const TransferFunds: React.FC = () => {
             onChange={(e) => setFromAccount(e.target.value)}
             className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            {userAccounts?.map((account: any) => (
+            {activeAccounts.map((account: any) => (
               <option key={account.id || account.accountType} value={account.id || account.accountType}>
                 {account.accountHolderName || account.accountName || `${account.accountType} Account`} 
                 {account.accountNumber ? ` ****${account.accountNumber.slice(-4)}` : ''} - {formatCurrency(account.balance || 0)}
@@ -396,7 +427,7 @@ const TransferFunds: React.FC = () => {
           </div>
           <p className="text-sm text-gray-500 mt-1">
             Available: {formatCurrency(
-              userAccounts?.find((acc: any) => (acc.id || acc.accountType) === fromAccount)?.balance || 0
+              activeAccounts.find((acc: any) => (acc.id || acc.accountType) === fromAccount)?.balance || 0
             )}
           </p>
         </div>

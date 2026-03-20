@@ -54,6 +54,35 @@ import {
 import ClientAccountEmailService from '../../utils/clientAccountEmailService';
 import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
 
+type AccountRecord = {
+  id: string;
+  userId?: string;
+  accountHolderName?: string;
+  userName?: string;
+  userEmail?: string;
+  email?: string;
+  accountNumber?: string;
+  fullAccountNumber?: string;
+  accountType?: string;
+  balance?: number | string;
+  status?: string;
+  isActive?: boolean;
+  routingNumber?: string;
+  phone?: string;
+  currency?: string;
+  features?: Record<string, unknown>;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  interestRate?: number | string;
+  monthlyTransactions?: number | string;
+  lastTransaction?: string | null;
+  [key: string]: unknown;
+};
+
 const ManageAccounts: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -63,8 +92,10 @@ const ManageAccounts: React.FC = () => {
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [createAccountStep, setCreateAccountStep] = useState(1);
+  const [showViewAccountModal, setShowViewAccountModal] = useState(false);
+  const [viewAccountData, setViewAccountData] = useState<AccountRecord | null>(null);
   const [showEditAccountModal, setShowEditAccountModal] = useState(false);
-  const [editAccountData, setEditAccountData] = useState<any>(null);
+  const [editAccountData, setEditAccountData] = useState<AccountRecord | null>(null);
   const [newAccountData, setNewAccountData] = useState({
     // Country & Residency
     country: 'US',
@@ -214,8 +245,15 @@ const ManageAccounts: React.FC = () => {
   });
 
   // Account data - load from Firestore
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<AccountRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const showLegacyCreateModal = false;
+
+  const toNumber = (value: number | string | undefined) => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') return parseFloat(value) || 0;
+    return 0;
+  };
 
   // Load accounts from Firestore
   React.useEffect(() => {
@@ -262,9 +300,11 @@ const ManageAccounts: React.FC = () => {
   }, []);
 
   const filteredAccounts = accounts.filter(account => {
+    const accountUserName = account.userName ?? '';
+    const accountUserEmail = account.userEmail ?? '';
     const matchesSearch = 
-      account.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      account.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      accountUserName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      accountUserEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
       account.accountNumber?.includes(searchTerm) ||
       account.fullAccountNumber?.includes(searchTerm);
     
@@ -276,7 +316,7 @@ const ManageAccounts: React.FC = () => {
   });
 
   // Calculate stats
-  const totalBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+  const totalBalance = accounts.reduce((sum, acc) => sum + toNumber(acc.balance), 0);
   const activeAccounts = accounts.filter(acc => {
     const status = acc.status || (acc.isActive ? 'active' : 'inactive');
     return status === 'active';
@@ -341,6 +381,15 @@ const ManageAccounts: React.FC = () => {
 
   const handleAccountAction = async (action: string, accountId: string) => {
     console.log(`${action} account ${accountId}`);
+
+    if (action === 'view') {
+      const accountToView = accounts.find(acc => acc.id === accountId);
+      if (accountToView) {
+        setViewAccountData(accountToView);
+        setShowViewAccountModal(true);
+      }
+      return;
+    }
     
     if (action === 'edit') {
       const accountToEdit = accounts.find(acc => acc.id === accountId);
@@ -478,11 +527,14 @@ Type "DELETE" to confirm permanent deletion:`;
     }
   };
 
-  const handleEditAccountChange = (field: string, value: any) => {
-    setEditAccountData((prev: any) => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleEditAccountChange = (field: string, value: unknown) => {
+    setEditAccountData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
   };
 
   const handleSaveAccountChanges = async () => {
@@ -515,7 +567,7 @@ Type "DELETE" to confirm permanent deletion:`;
         email: editAccountData.userEmail, // Ensure both email fields are updated
         phone: editAccountData.phone,
         accountType: editAccountData.accountType,
-        balance: parseFloat(editAccountData.balance) || 0,
+        balance: toNumber(editAccountData.balance),
         currency: editAccountData.currency,
         isActive: editAccountData.isActive,
         status: editAccountData.status,
@@ -560,28 +612,28 @@ Type "DELETE" to confirm permanent deletion:`;
       // Show detailed success message
       const accountBeforeUpdate = accounts.find(acc => acc.id === editAccountData.id);
       const emailChanged = editAccountData.userEmail !== accountBeforeUpdate?.userEmail;
-      const balanceChanged = parseFloat(editAccountData.balance) !== (accountBeforeUpdate?.balance || 0);
+      const balanceChanged = toNumber(editAccountData.balance) !== toNumber(accountBeforeUpdate?.balance);
       
       let successMessage = 'Account information updated successfully!';
       if (emailChanged) {
         successMessage += `\n✉️ Email changed to: ${editAccountData.userEmail}`;
       }
       if (balanceChanged) {
-        successMessage += `\n💰 Balance updated to: $${parseFloat(editAccountData.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        successMessage += `\n💰 Balance updated to: $${toNumber(editAccountData.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       }
       
       alert(successMessage);
       setShowEditAccountModal(false);
       setEditAccountData(null);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('🔧 Error updating account:', error);
       console.error('🔧 Error details:', {
-        message: error?.message,
-        code: error?.code,
-        stack: error?.stack
+        message: error instanceof Error ? error.message : undefined,
+        stack: error instanceof Error ? error.stack : undefined
       });
-      alert(`Failed to update account: ${error?.message || 'Unknown error'}`);
+      alert(`Failed to update account: ${errorMessage}`);
     }
   };
 
@@ -646,13 +698,13 @@ Type "DELETE" to confirm permanent deletion:`;
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: unknown) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setNewAccountData(prev => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof typeof prev] as any,
+          ...(prev[parent as keyof typeof prev] as Record<string, unknown>),
           [child]: value
         }
       }));
@@ -959,8 +1011,10 @@ Type "DELETE" to confirm permanent deletion:`;
                     </td>
                   </tr>
                 ) : filteredAccounts.map((account) => {
-                  const StatusIcon = getStatusIcon(account.status);
-                  const TypeIcon = getAccountTypeIcon(account.accountType);
+                  const accountStatus = account.status || (account.isActive ? 'active' : 'inactive');
+                  const accountType = account.accountType || 'checking';
+                  const StatusIcon = getStatusIcon(accountStatus);
+                  const TypeIcon = getAccountTypeIcon(accountType);
                   return (
                     <tr key={account.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -986,33 +1040,33 @@ Type "DELETE" to confirm permanent deletion:`;
                             {account.accountNumber}
                           </span>
                         </div>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAccountTypeColor(account.accountType)}`}>
-                          {account.accountType}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAccountTypeColor(accountType)}`}>
+                          {accountType}
                         </span>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-bold text-gray-900">
-                          ${account.balance.toLocaleString()}
+                          ${toNumber(account.balance).toLocaleString()}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {account.interestRate}% APY
+                          {toNumber(account.interestRate)}% APY
                         </div>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(account.status || (account.isActive ? 'active' : 'inactive'))}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(accountStatus)}`}>
                           <StatusIcon className="w-3 h-3 mr-1" />
-                          {account.status || (account.isActive ? 'active' : 'inactive')}
+                          {accountStatus}
                         </span>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="mb-1">
-                          <span className="font-medium">{account.monthlyTransactions}</span> transactions
+                          <span className="font-medium">{toNumber(account.monthlyTransactions)}</span> transactions
                         </div>
                         <div className="text-xs text-gray-500">
-                          Last: {formatDate(account.lastTransaction)}
+                          Last: {formatDate(account.lastTransaction ?? null)}
                         </div>
                       </td>
                       
@@ -1115,7 +1169,7 @@ Type "DELETE" to confirm permanent deletion:`;
         </div>
 
         {/* Modal removed - now redirects to comprehensive ClientAccountOpening */}
-        {false && (
+        {showLegacyCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
               {/* Modal Header */}
@@ -2186,6 +2240,90 @@ Type "DELETE" to confirm permanent deletion:`;
                     Save Changes
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Account Modal */}
+        {showViewAccountModal && viewAccountData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Account Details</h3>
+                    <p className="text-sm text-gray-600">Read-only account information</p>
+                  </div>
+                  <button
+                    onClick={() => setShowViewAccountModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="text-xs text-gray-500">Account Holder</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.accountHolderName || viewAccountData.userName || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Email</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.userEmail || viewAccountData.email || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Account Number</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.accountNumber || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Account Type</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.accountType || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Balance</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      ${Number(viewAccountData.balance || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Status</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.status || (viewAccountData.isActive ? 'active' : 'inactive')}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Routing Number</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.routingNumber || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Phone</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {viewAccountData.phone || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+                <Button onClick={() => setShowViewAccountModal(false)} variant="outline">
+                  Close
+                </Button>
               </div>
             </div>
           </div>

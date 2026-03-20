@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -6,45 +6,39 @@ import { SystemConfigProvider } from './contexts/SystemConfigContext';
 import { UserRole } from './types';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Auth pages - bank-standard separation
-import ClientLoginPage from './pages/auth/ClientLoginPage';
-import ChangePasswordPage from './pages/auth/ChangePasswordPage';
-import PasswordResetActionPage from './pages/auth/PasswordResetActionPage';
-// SignupPage removed - admin-only account creation system
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+const ClientLoginPage = React.lazy(() => import('./pages/auth/ClientLoginPage'));
+const ChangePasswordPage = React.lazy(() => import('./pages/auth/ChangePasswordPage'));
+const PasswordResetActionPage = React.lazy(() => import('./pages/auth/PasswordResetActionPage'));
+const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const AdminAccessPage = React.lazy(() => import('./pages/auth/AdminAccessPage'));
 
-// Client pages
-import ClientDashboard from './pages/client/Dashboard';
-import AccountOverview from './pages/client/AccountOverview';
-import TransactionHistory from './pages/client/TransactionHistory';
-import DepositFunds from './pages/client/DepositFunds';
-import WithdrawFunds from './pages/client/WithdrawFunds';
-import TransferFunds from './pages/client/TransferFunds';
-import EWalletManagement from './pages/client/EWalletManagement';
-import Profile from './pages/client/Profile';
-import ReportsAnalytics from './pages/client/ReportsAnalytics';
-import Statements from './pages/client/Statements';
-import HelpSupport from './pages/client/HelpSupport';
+const ClientDashboard = React.lazy(() => import('./pages/client/Dashboard'));
+const AccountOverview = React.lazy(() => import('./pages/client/AccountOverview'));
+const TransactionHistory = React.lazy(() => import('./pages/client/TransactionHistory'));
+const DepositFunds = React.lazy(() => import('./pages/client/DepositFunds'));
+const WithdrawFunds = React.lazy(() => import('./pages/client/WithdrawFunds'));
+const TransferFunds = React.lazy(() => import('./pages/client/TransferFunds'));
+const EWalletManagement = React.lazy(() => import('./pages/client/EWalletManagement'));
+const Profile = React.lazy(() => import('./pages/client/Profile'));
+const ReportsAnalytics = React.lazy(() => import('./pages/client/ReportsAnalytics'));
+const Statements = React.lazy(() => import('./pages/client/Statements'));
+const HelpSupport = React.lazy(() => import('./pages/client/HelpSupport'));
 
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminAnalytics from './pages/admin/Analytics';
-import ClientAccountOpening from './pages/admin/ClientAccountOpening';
-import ManageUsers from './pages/admin/ManageUsers';
-import ManagePasswordResets from './pages/admin/ManagePasswordResets';
-import ManageAccounts from './pages/admin/ManageAccounts';
-import ManageTransactions from './pages/admin/ManageTransactions';
-import ManageDeposits from './pages/admin/ManageDeposits';
-import ManageWithdrawals from './pages/admin/ManageWithdrawals';
-import ManageCountries from './pages/admin/ManageCountries';
-import ManageFAQs from './pages/admin/ManageFAQs';
-import ManageSupportRequests from './pages/admin/ManageSupportRequests';
-import SystemSettings from './pages/admin/SystemSettings';
-import ComplianceCenter from './pages/admin/ComplianceCenter';
-import AdminNotifications from './pages/admin/AdminNotifications';
-
-// Admin Access
-import AdminAccessPage from './pages/auth/AdminAccessPage';
+const AdminDashboard = React.lazy(() => import('./pages/admin/Dashboard'));
+const AdminAnalytics = React.lazy(() => import('./pages/admin/Analytics'));
+const ClientAccountOpening = React.lazy(() => import('./pages/admin/ClientAccountOpening'));
+const ManageUsers = React.lazy(() => import('./pages/admin/ManageUsers'));
+const ManagePasswordResets = React.lazy(() => import('./pages/admin/ManagePasswordResets'));
+const ManageAccounts = React.lazy(() => import('./pages/admin/ManageAccounts'));
+const ManageTransactions = React.lazy(() => import('./pages/admin/ManageTransactions'));
+const ManageDeposits = React.lazy(() => import('./pages/admin/ManageDeposits'));
+const ManageWithdrawals = React.lazy(() => import('./pages/admin/ManageWithdrawals'));
+const ManageCountries = React.lazy(() => import('./pages/admin/ManageCountries'));
+const ManageFAQs = React.lazy(() => import('./pages/admin/ManageFAQs'));
+const ManageSupportRequests = React.lazy(() => import('./pages/admin/ManageSupportRequests'));
+const SystemSettings = React.lazy(() => import('./pages/admin/SystemSettings'));
+const ComplianceCenter = React.lazy(() => import('./pages/admin/ComplianceCenter'));
+const AdminNotifications = React.lazy(() => import('./pages/admin/AdminNotifications'));
 
 // Loading component
 const LoadingSpinner = () => (
@@ -145,7 +139,8 @@ const AdminAccessRoute: React.FC<PublicRouteProps> = ({ children }) => {
 function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Routes>
+      <Suspense fallback={<LoadingSpinner />}>
+        <Routes>
         {/* Public routes */}
         {/* Old login removed - using admin-access and client-login instead */}
         <Route
@@ -405,7 +400,8 @@ function AppContent() {
         
         {/* 404 fallback */}
         <Route path="*" element={<Navigate to="/client-login" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </div>
   );
 }

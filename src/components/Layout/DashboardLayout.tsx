@@ -23,6 +23,7 @@ import {
 import LogoDisplay from '../ui/LogoDisplay';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
+import { useUserAccounts } from '../../hooks/useFirestore';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import toast from 'react-hot-toast';
@@ -117,9 +118,27 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subtitle }) => {
   const { user } = useAuth();
   const { config, loading: configLoading, getPrimaryLogo, getCompanyName } = useSystemConfigContext();
+  const { data: userAccounts } = useUserAccounts(user?.uid || '');
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const isAccountFullyActive = (account: any) => {
+    const status = String(account?.status ?? (account?.isActive ? 'active' : 'inactive')).toLowerCase();
+    if (status === 'inactive' || status === 'pending' || status === 'pending_approval') {
+      return false;
+    }
+    if (account?.isActive === false) {
+      return false;
+    }
+    return status === 'active' || account?.isActive === true;
+  };
+
+  const hasActiveAccount = (userAccounts || []).some((account: any) => isAccountFullyActive(account));
+
+  const showActivationRequiredNotice = () => {
+    toast.error('Activate your account to enable this function');
+  };
 
   const handleSignOut = async () => {
     try {
@@ -226,6 +245,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subt
             {navigationItems.map((item) => {
               const IconComponent = item.icon;
               const isActive = location.pathname === item.path;
+              const isMoneyAction = item.id === 'transfer' || item.id === 'deposit' || item.id === 'withdraw';
+              const isDisabled = isMoneyAction && !hasActiveAccount;
+
+              if (isDisabled) {
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={showActivationRequiredNotice}
+                    className="group flex w-full items-center px-4 py-3 text-sm font-medium rounded-xl text-gray-400 bg-gray-50 cursor-not-allowed"
+                    title="Available once your account is fully active"
+                  >
+                    <IconComponent className="mr-3 h-5 w-5 text-gray-400" />
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center justify-between">
+                        <span>{item.label}</span>
+                        <Shield className="w-4 h-4 text-gray-400" />
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">Account activation required</p>
+                    </div>
+                  </button>
+                );
+              }
               
               return (
                 <Link

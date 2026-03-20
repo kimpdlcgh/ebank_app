@@ -33,7 +33,8 @@ import DashboardLayout from '../../components/Layout/DashboardLayout';
 import SearchableCountrySelect from '../../components/ui/SearchableCountrySelect';
 import { useAuth } from '../../contexts/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../config/firebase';
 import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
@@ -44,6 +45,89 @@ const Profile: React.FC = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [profileImagePreview, setProfileImagePreview] = useState('');
+
+  const resetFormFromUser = (sourceUser: typeof user) => {
+    if (!sourceUser) return;
+
+    setFormData(prevData => ({
+      ...prevData,
+      firstName: sourceUser.firstName || '',
+      lastName: sourceUser.lastName || '',
+      email: sourceUser.email || '',
+      phoneNumber: sourceUser.phoneNumber || '',
+      dateOfBirth: (sourceUser as any).dateOfBirth || '',
+      nationality: (sourceUser as any).nationality || '',
+      occupation: (sourceUser as any).occupation || '',
+      homeAddress: (sourceUser as any).homeAddress || prevData.homeAddress,
+      officeAddress: (sourceUser as any).officeAddress || prevData.officeAddress,
+      emergencyContact: (sourceUser as any).emergencyContact || prevData.emergencyContact,
+    }));
+    setProfileImagePreview(sourceUser.profileImageUrl || '');
+  };
+
+  const getInitials = () => {
+    const firstInitial = formData.firstName?.trim().charAt(0) || '';
+    const lastInitial = formData.lastName?.trim().charAt(0) || '';
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+    return initials || 'U';
+  };
+
+  const optimizeImageForUpload = async (file: File): Promise<File> => {
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read image file'));
+      reader.readAsDataURL(file);
+    });
+
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed to load image for processing'));
+      img.src = dataUrl;
+    });
+
+    const maxDimension = 1024;
+    const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) {
+      throw new Error('Failed to initialize image processor');
+    }
+
+    context.drawImage(image, 0, 0, width, height);
+
+    const targetType = 'image/jpeg';
+    let quality = 0.9;
+    let blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, targetType, quality);
+    });
+
+    // Gradually reduce quality if needed to fit upload budget.
+    while (blob && blob.size > 2 * 1024 * 1024 && quality > 0.45) {
+      quality -= 0.1;
+      blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, targetType, quality);
+      });
+    }
+
+    if (!blob) {
+      throw new Error('Failed to process image');
+    }
+
+    const outputName = file.name.replace(/\.[^/.]+$/, '') + '.jpg';
+    return new File([blob], outputName, {
+      type: targetType,
+      lastModified: Date.now()
+    });
+  };
   
   // Enhanced user information with international address support
   const [formData, setFormData] = useState({
@@ -93,22 +177,7 @@ const Profile: React.FC = () => {
 
   // Initialize form data when user data is loaded
   useEffect(() => {
-    if (user) {
-      setFormData(prevData => ({
-        ...prevData,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phoneNumber: user.phoneNumber || '',
-        // Initialize other fields with existing data or empty strings
-        dateOfBirth: (user as any).dateOfBirth || '',
-        nationality: (user as any).nationality || '',
-        occupation: (user as any).occupation || '',
-        homeAddress: (user as any).homeAddress || prevData.homeAddress,
-        officeAddress: (user as any).officeAddress || prevData.officeAddress,
-        emergencyContact: (user as any).emergencyContact || prevData.emergencyContact,
-      }));
-    }
+    resetFormFromUser(user);
   }, [user]);
 
   // Handle form input changes
@@ -161,7 +230,6 @@ const Profile: React.FC = () => {
         phoneNumber: formData.phoneNumber,
       });
 
-      toast.success('Profile updated successfully');
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -173,16 +241,45 @@ const Profile: React.FC = () => {
 
 
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Handle profile image upload here
-        console.log('Image uploaded:', e.target?.result);
-        toast.success('Profile picture updated successfully');
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user?.uid) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      event.target.value = '';
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const optimizedFile = await optimizeImageForUpload(file);
+      const maxSizeInBytes = 2 * 1024 * 1024;
+
+      if (optimizedFile.size > maxSizeInBytes) {
+        toast.error('Unable to compress image below 2MB. Try a smaller photo.');
+        event.target.value = '';
+        setIsUploadingImage(false);
+        return;
+      }
+
+      const extension = optimizedFile.name.split('.').pop() || 'jpg';
+      const filePath = `profiles/${user.uid}/profile-${Date.now()}.${extension}`;
+      const imageRef = ref(storage, filePath);
+
+      await uploadBytes(imageRef, optimizedFile);
+      const imageUrl = await getDownloadURL(imageRef);
+
+      await updateProfile({ profileImageUrl: imageUrl });
+      setProfileImagePreview(imageUrl);
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      toast.error('Failed to update profile picture');
+    } finally {
+      setIsUploadingImage(false);
+      event.target.value = '';
     }
   };
 
@@ -203,7 +300,10 @@ const Profile: React.FC = () => {
                 {loading ? 'Saving...' : 'Save Changes'}
               </button>
               <button
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  resetFormFromUser(user);
+                  setIsEditing(false);
+                }}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
               >
                 <X className="w-4 h-4" />
@@ -225,24 +325,27 @@ const Profile: React.FC = () => {
       {/* Profile Picture */}
       <div className="flex items-center space-x-6 p-6 bg-gray-50 rounded-lg">
         <div className="relative">
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-            {user?.profileImageUrl ? (
+          <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center overflow-hidden">
+            {!isUploadingImage && (profileImagePreview || user?.profileImageUrl) ? (
               <img 
-                src={user.profileImageUrl} 
+                src={profileImagePreview || user?.profileImageUrl} 
                 alt="Profile" 
                 className="w-full h-full object-cover"
               />
             ) : (
-              <User className="w-12 h-12 text-gray-400" />
+              <span className="text-xl font-bold text-blue-700">{getInitials()}</span>
             )}
           </div>
           {isEditing && (
-            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+            <label className={`absolute bottom-0 right-0 text-white p-2 rounded-full transition-colors ${
+              isUploadingImage ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 cursor-pointer hover:bg-blue-700'
+            }`}>
               <Camera className="w-4 h-4" />
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
+                disabled={isUploadingImage}
                 className="hidden"
               />
             </label>
@@ -258,7 +361,7 @@ const Profile: React.FC = () => {
           <div className="flex items-center gap-2 text-sm">
             <div className="flex items-center gap-1 text-green-600">
               <Check className="w-4 h-4" />
-              <span>Verified Account</span>
+              <span>{isUploadingImage ? 'Uploading photo...' : 'Verified Account'}</span>
             </div>
           </div>
         </div>

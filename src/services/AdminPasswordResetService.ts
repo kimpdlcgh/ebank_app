@@ -16,6 +16,7 @@ import {
   getDoc
 } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { isAdminRole } from '../utils/roleUtils';
 import { PasswordGenerator } from '../utils/passwordGenerator';
 import { updatePasswordResetRequest } from './PasswordResetService';
 
@@ -222,7 +223,7 @@ export class AdminPasswordResetService {
       const adminDoc = await getDoc(doc(db, 'users', adminUid));
       const adminData = adminDoc.data();
       
-      return adminData?.role === 'admin' && adminData?.isActive === true;
+      return isAdminRole(adminData?.role) && adminData?.isActive === true;
     } catch (error) {
       console.error('Error validating admin permissions:', error);
       return false;
