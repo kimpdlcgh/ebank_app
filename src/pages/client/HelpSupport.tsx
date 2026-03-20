@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -56,6 +56,7 @@ interface FAQ {
 }
 
 const HelpSupport: React.FC = () => {
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [contactModalOpen, setContactModalOpen] = useState(false);
@@ -199,6 +200,15 @@ const HelpSupport: React.FC = () => {
     { id: 'deposits', name: 'Deposits & Withdrawals', icon: FileText },
     { id: 'support', name: 'Customer Service', icon: MessageCircle }
   ];
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const categoryParam = params.get('category');
+    const validCategories = new Set(categories.map((category) => category.id));
+    if (categoryParam && validCategories.has(categoryParam)) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [location.search]);
 
   const filteredFAQs = faqs.filter(faq => {
     const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
@@ -423,7 +433,7 @@ const HelpSupport: React.FC = () => {
                 title: 'Video Tutorials',
                 description: 'Step-by-step video guides',
                 icon: Users,
-                link: '/help?category=general'
+                link: '/help?category=all'
               },
             ].map((resource) => (
               <Link
@@ -482,6 +492,7 @@ const HelpSupport: React.FC = () => {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
+                  <p className="text-xs text-gray-500 mb-3">Click any ticket row to view full details and responses.</p>
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50">
                       <tr>
@@ -498,6 +509,15 @@ const HelpSupport: React.FC = () => {
                           key={ticket.id} 
                           className="hover:bg-gray-50 cursor-pointer transition-colors"
                           onClick={() => setSelectedTicketDetail(ticket)}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setSelectedTicketDetail(ticket);
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          title="Open ticket details"
                         >
                           <td className="py-3 px-4 font-mono text-blue-600">#{ticket.ticketId}</td>
                           <td className="py-3 px-4 text-gray-900 max-w-xs truncate">{ticket.subject}</td>
@@ -592,7 +612,7 @@ const HelpSupport: React.FC = () => {
                             <div key={response.id} className={`rounded-lg p-4 ${response.isAdminResponse ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
                               <div className="flex items-center justify-between mb-2">
                                 <p className={`text-xs font-semibold ${response.isAdminResponse ? 'text-blue-700' : 'text-gray-700'}`}>
-                                  {response.isAdminResponse ? '👨‍💼 Support Team' : '👤 You'} ({response.respondedBy})
+                                  {response.isAdminResponse ? 'Support Team' : 'You'} ({response.respondedBy})
                                 </p>
                                 <p className="text-xs text-gray-500">{new Date(response.respondedAt).toLocaleString()}</p>
                               </div>
