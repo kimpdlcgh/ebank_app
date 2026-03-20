@@ -13,9 +13,9 @@ const ForgotPasswordPage: React.FC = () => {
   const [error, setError] = useState('');
   const { resetPassword } = useAuth();
 
-  const validateEmail = (email: string): boolean => {
+  const validateEmail = (value: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return emailRegex.test(value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,18 +36,18 @@ const ForgotPasswordPage: React.FC = () => {
       setLoading(true);
       await resetPassword(email);
       setIsEmailSent(true);
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+
       let errorMessage = 'Failed to send reset email. Please try again.';
-      if (error.code === 'auth/user-not-found') {
+      if (err.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email address';
-      } else if (error.code === 'auth/invalid-email') {
+      } else if (err.code === 'auth/invalid-email') {
         errorMessage = 'Please enter a valid email address';
-      } else if (error.code === 'auth/too-many-requests') {
+      } else if (err.code === 'auth/too-many-requests') {
         errorMessage = 'Too many requests. Please wait a moment before trying again.';
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -78,9 +78,10 @@ const ForgotPasswordPage: React.FC = () => {
               </div>
               <CardTitle className="text-green-800">Email Sent Successfully</CardTitle>
               <CardDescription>
-                We've sent a password reset link to your email address
+                We have sent a password reset link to your email address
               </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-6">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
@@ -108,23 +109,21 @@ const ForgotPasswordPage: React.FC = () => {
                   </ol>
                 </div>
 
-                <div className="pt-2">
-                  <Button
-                    onClick={() => {
-                      setIsEmailSent(false);
-                      setEmail('');
-                    }}
-                    variant="outline"
-                    className="btn btn-outline btn-md w-full"
-                  >
-                    Send Another Email
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => {
+                    setIsEmailSent(false);
+                    setEmail('');
+                  }}
+                  variant="outline"
+                  className="btn btn-outline btn-md w-full"
+                >
+                  Send Another Email
+                </Button>
               </div>
 
               <div className="text-center pt-4 border-t border-gray-200">
                 <Link
-                  to="/login"
+                  to="/client-login"
                   className="flex items-center justify-center gap-2 text-sm text-primary-600 hover:text-primary-500 transition-colors"
                 >
                   <ArrowLeft className="h-4 w-4" />
@@ -135,11 +134,10 @@ const ForgotPasswordPage: React.FC = () => {
           </Card>
 
           <div className="text-center text-xs text-gray-500">
-            <p>Didn't receive the email? Check your spam folder or contact support.</p>
+            <p>Did not receive the email? Check your spam folder or contact support.</p>
           </div>
         </div>
 
-        {/* Animated Background Elements */}
         <div className="fixed inset-0 -z-10">
           <div className="bg-gradient-1 absolute top-0 left-0 w-72 h-72 rounded-full opacity-20 animate-float"></div>
           <div className="bg-gradient-2 absolute top-1/2 right-0 w-96 h-96 rounded-full opacity-20 animate-float-delayed"></div>
@@ -166,9 +164,10 @@ const ForgotPasswordPage: React.FC = () => {
               Forgot Password
             </CardTitle>
             <CardDescription>
-              Enter your email address and we'll send you a link to reset your password
+              Enter your email address and we will send you a link to reset your password
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="form-group">
@@ -192,7 +191,7 @@ const ForgotPasswordPage: React.FC = () => {
                   <div className="text-xs text-blue-800">
                     <p className="font-medium">How password reset works:</p>
                     <ul className="mt-1 space-y-1 list-disc list-inside">
-                      <li>We'll send a secure link to your email</li>
+                      <li>We send a secure link to your email</li>
                       <li>Click the link to create a new password</li>
                       <li>The link expires in 1 hour for security</li>
                       <li>Your account remains secure throughout</li>
@@ -227,22 +226,12 @@ const ForgotPasswordPage: React.FC = () => {
               </div>
 
               <Link
-                to="/login"
+                to="/client-login"
                 className="btn btn-outline btn-md w-full flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Sign In
               </Link>
-                
-              <div className="text-center text-sm text-gray-600">
-                Don't have an account?{' '}
-                <Link
-                  to="/signup"
-                  className="text-primary-600 hover:text-primary-500 font-medium transition-colors"
-                >
-                  Sign up
-                </Link>
-              </div>
             </form>
           </CardContent>
         </Card>
@@ -253,7 +242,6 @@ const ForgotPasswordPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Animated Background Elements */}
       <div className="fixed inset-0 -z-10">
         <div className="bg-gradient-1 absolute top-0 left-0 w-72 h-72 rounded-full opacity-20 animate-float"></div>
         <div className="bg-gradient-2 absolute top-1/2 right-0 w-96 h-96 rounded-full opacity-20 animate-float-delayed"></div>

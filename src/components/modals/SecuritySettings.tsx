@@ -102,20 +102,28 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
+    const currentPassword = passwordForm.currentPassword.trim();
+    const newPassword = passwordForm.newPassword.trim();
+    const confirmPassword = passwordForm.confirmPassword.trim();
     
     // Basic validation
-    if (!passwordForm.currentPassword.trim()) {
+    if (!currentPassword) {
       toast.error('Please enter your current password');
       return;
     }
     
-    if (!passwordForm.newPassword.trim()) {
+    if (!newPassword) {
       toast.error('Please enter a new password');
       return;
     }
     
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    if (newPassword !== confirmPassword) {
       toast.error('New passwords do not match');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      toast.error('New password must be different from current password');
       return;
     }
     
@@ -130,9 +138,9 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
       console.log('SecuritySettings: Attempting password change...');
       
       const success = await PasswordSecurityService.changePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword,
-        confirmPassword: passwordForm.confirmPassword,
+        currentPassword,
+        newPassword,
+        confirmPassword,
         twoFactorCode: twoFactorEnabled ? passwordForm.twoFactorCode : undefined
       });
       
@@ -158,7 +166,6 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
         }, 2000);
       } else {
         console.log('SecuritySettings: Password change failed');
-        toast.error('Failed to change password. Please check your current password and try again.');
       }
     } catch (error: any) {
       console.error('Password change error:', error);

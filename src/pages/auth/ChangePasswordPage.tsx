@@ -179,7 +179,7 @@ const ChangePasswordPage: React.FC = () => {
         toast.success('Password changed successfully! Please log in with your new password.');
         // Redirect to login page since user will be signed out after password change
         setTimeout(() => {
-          navigate('/login');
+          navigate('/client-login?message=password-reset-success');
         }, 2000);
       }
     } catch (error: unknown) {

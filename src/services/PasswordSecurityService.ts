@@ -361,6 +361,10 @@ export class PasswordSecurityService {
       let errorMessage = 'Failed to change password';
       if (error.code === 'auth/wrong-password') {
         errorMessage = 'Current password is incorrect';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Current password is incorrect';
+      } else if (error.code === 'auth/requires-recent-login') {
+        errorMessage = 'For security reasons, please sign in again and retry changing your password';
       } else if (error.code === 'auth/weak-password') {
         errorMessage = 'New password is too weak';
       } else if (error.message) {
