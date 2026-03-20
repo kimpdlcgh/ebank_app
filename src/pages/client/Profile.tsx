@@ -47,6 +47,12 @@ const Profile: React.FC = () => {
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [profileImagePreview, setProfileImagePreview] = useState('');
+  const [notificationSettings, setNotificationSettings] = useState({
+    loginNotifications: true,
+    transactionAlerts: true,
+    monthlyStatements: true,
+    marketingEmails: false
+  });
 
   const resetFormFromUser = (sourceUser: typeof user) => {
     if (!sourceUser) return;
@@ -911,13 +917,6 @@ const Profile: React.FC = () => {
   );
 
   const renderNotifications = () => {
-    const [notificationSettings, setNotificationSettings] = useState({
-      loginNotifications: true,
-      transactionAlerts: true,
-      monthlyStatements: true,
-      marketingEmails: false
-    });
-
     return (
       <div className="space-y-6">
         <div>
