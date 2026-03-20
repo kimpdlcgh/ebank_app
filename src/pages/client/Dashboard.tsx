@@ -269,8 +269,8 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:h-screen lg:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div className="flex flex-col h-full">
           {/* Sidebar Header - Enhanced Logo */}
@@ -306,7 +306,7 @@ const Dashboard: React.FC = () => {
           {/* User Profile Section */}
           <div className="px-6 py-4 border-b bg-gray-50">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-full flex items-center justify-center text-white font-semibold text-lg">
                 {user?.firstName?.charAt(0) || 'U'}
               </div>
               <div>
@@ -373,11 +373,11 @@ const Dashboard: React.FC = () => {
             })}
           </nav>
 
-          {/* Sidebar Footer */}
-          <div className="px-4 py-4 border-t bg-gray-50">
+          {/* Sidebar Footer - Always visible */}
+          <div className="mt-auto px-4 py-4 border-t bg-gray-50">
             <div className="space-y-2">
               <Link 
-                to="/dashboard/help" 
+                to="/help" 
                 className="w-full flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <HelpCircle className="mr-4 w-5 h-5 text-gray-500" />
@@ -387,8 +387,8 @@ const Dashboard: React.FC = () => {
                 onClick={handleSignOut}
                 className="w-full flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
-                <LogOut className="mr-4 w-5 h-5" />
-                <span>Sign Out</span>
+                  <LogOut className="mr-4 w-5 h-5" />
+                  <span>Logout</span>
               </button>
             </div>
           </div>
@@ -396,7 +396,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-0">
+      <div className="flex-1 lg:ml-80">
         {/* Top Header */}
         <header className="bg-white shadow-sm border-b sticky top-0 z-30">
           <div className="px-4 sm:px-6 lg:px-8">
@@ -432,7 +432,7 @@ const Dashboard: React.FC = () => {
         </header>
 
         {/* Dashboard Content */}
-        <main className="p-6 space-y-6">
+        <main className="p-4 sm:p-5 lg:p-6 space-y-5">
           {/* Account Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* Total Balance Card */}
@@ -550,27 +550,24 @@ const Dashboard: React.FC = () => {
 
             {/* Account Cards - Enhanced Modern Design */}
             {isLoadingAccounts ? (
-              <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 border border-gray-200 text-center shadow-sm">
+              <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border border-gray-200 text-left shadow-sm">
                 <div className="relative">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-100 border-t-blue-600 mx-auto mb-4"></div>
-                  <div className="absolute inset-0 rounded-full bg-blue-50 opacity-20 animate-pulse"></div>
+                  <div className="animate-spin rounded-full h-10 w-10 border-4 border-slate-200 border-t-slate-700 mb-3"></div>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Accounts</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Loading Accounts</h3>
                 <p className="text-gray-600">Fetching your latest account information...</p>
               </div>
             ) : accounts.length === 0 ? (
-              <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 rounded-2xl p-8 border-2 border-dashed border-blue-200 text-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -translate-y-16 translate-x-16 opacity-20"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-100 rounded-full translate-y-12 -translate-x-12 opacity-30"></div>
+              <div className="bg-gradient-to-br from-slate-50 via-white to-gray-50 rounded-xl p-6 border border-dashed border-slate-300 text-left relative overflow-hidden">
                 <div className="relative z-10">
-                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center mb-3 shadow-sm">
                     <CreditCard className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Welcome to Banking</h3>
-                  <p className="text-gray-600 mb-6 max-w-sm mx-auto">Get started by opening your first account. Our team will help you choose the perfect account type.</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Welcome to Banking</h3>
+                  <p className="text-sm text-gray-600 mb-4 max-w-lg">Get started by opening your first account. Our team will help you choose the right account structure for your needs.</p>
                   <button 
                     onClick={() => setIsContactModalOpen(true)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold"
+                    className="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors duration-200 font-medium"
                   >
                     Open Your First Account
                   </button>
@@ -580,20 +577,20 @@ const Dashboard: React.FC = () => {
               accounts.map((account: any) => (
               <div
                 key={account.id}
-                className={`group relative bg-white rounded-2xl p-6 transition-all duration-300 cursor-pointer transform hover:scale-[1.02] ${
+                className={`group relative bg-white rounded-xl p-5 transition-all duration-200 cursor-pointer ${
                   selectedAccount?.id === account.id
-                    ? 'ring-2 ring-blue-500 shadow-xl shadow-blue-500/20 border-0'
-                    : 'border border-gray-200 hover:border-blue-300 hover:shadow-xl'
+                    ? 'ring-2 ring-slate-700 shadow-md border-0'
+                    : 'border border-gray-200 hover:border-slate-300 hover:shadow-md'
                 }`}
                 onClick={() => setSelectedAccount(account)}
               >
                 {/* Gradient Background Overlay */}
                 <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${
                   account.accountType === 'savings' 
-                    ? 'from-emerald-50 to-teal-50' 
+                    ? 'from-gray-50 to-slate-50' 
                     : account.accountType === 'checking'
-                    ? 'from-blue-50 to-indigo-50'
-                    : 'from-purple-50 to-pink-50'
+                    ? 'from-slate-50 to-gray-50'
+                    : 'from-gray-50 to-zinc-50'
                 } opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                 
                 {/* Content */}
@@ -601,14 +598,14 @@ const Dashboard: React.FC = () => {
                   {/* Header Section */}
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-6 gap-3 pr-10">
                     <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm ${
                         account.accountType === 'savings' 
-                          ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
+                          ? 'bg-gradient-to-br from-slate-700 to-slate-900' 
                           : account.accountType === 'checking'
-                          ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
-                          : 'bg-gradient-to-br from-purple-500 to-pink-600'
+                          ? 'bg-gradient-to-br from-slate-700 to-slate-900'
+                          : 'bg-gradient-to-br from-slate-700 to-slate-900'
                       }`}>
-                        <CreditCard className="w-7 h-7 text-white" />
+                        <CreditCard className="w-6 h-6 text-white" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -616,7 +613,7 @@ const Dashboard: React.FC = () => {
                             {account.accountName || `${account.accountType || account.type} Account`}
                           </h3>
                           {account.primary && (
-                            <div className="inline-flex flex-shrink-0 items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                            <div className="inline-flex flex-shrink-0 items-center bg-slate-800 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
                               <Star className="w-3 h-3 mr-1" />
                               Primary
                             </div>
@@ -672,7 +669,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-500">Account Type</p>
-                      <p className="font-bold text-gray-900 capitalize">{account.accountType || account.type}</p>
+                      <p className="font-semibold text-gray-900 capitalize">{account.accountType || account.type}</p>
                     </div>
                   </div>
                   
@@ -697,7 +694,7 @@ const Dashboard: React.FC = () => {
                             return (
                               <div 
                                 key={feature}
-                                className="flex items-center space-x-2 bg-white bg-opacity-80 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                                className="flex items-center space-x-2 bg-white border border-gray-200 rounded-md px-2.5 py-1.5 text-xs"
                               >
                                 <div className="text-blue-600">
                                   {getFeatureIcon(feature)}
@@ -744,7 +741,7 @@ const Dashboard: React.FC = () => {
                 
                 {/* Selection Indicator */}
                 {selectedAccount?.id === account.id && (
-                  <div className="absolute top-4 right-4 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                  <div className="absolute top-4 right-4 w-6 h-6 bg-slate-800 rounded-full flex items-center justify-center">
                     <div className="w-2 h-2 bg-white rounded-full"></div>
                   </div>
                 )}
@@ -754,23 +751,23 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
             {/* Recent Transactions - Enhanced */}
-            <div className="xl:col-span-2">
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+            <div className="xl:col-span-7">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                      <History className="w-5 h-5 text-white" />
+                    <div className="w-9 h-9 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
+                      <History className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
-                      <p className="text-sm text-gray-500">Your latest transactions</p>
+                      <h3 className="text-base font-semibold text-gray-900">Recent Activity</h3>
+                      <p className="text-xs text-gray-500">Latest transaction movements</p>
                     </div>
                   </div>
                   <Link
                     to="/transactions"
-                    className="group flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl transition-all duration-200 font-semibold"
+                    className="group flex items-center space-x-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-all duration-200 text-sm font-medium"
                   >
                     <span>View All</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -779,32 +776,31 @@ const Dashboard: React.FC = () => {
 
                 <div className="space-y-3">
                   {mockTransactions.length === 0 ? (
-                    <div className="text-center py-12 relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-transparent to-purple-50 rounded-2xl"></div>
+                    <div className="text-left py-6 px-4 relative overflow-hidden border border-gray-100 rounded-xl bg-gradient-to-br from-slate-50 via-white to-gray-50">
                       <div className="relative z-10">
-                        <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                          <History className="w-10 h-10 text-gray-400" />
+                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
+                          <History className="w-6 h-6 text-slate-500" />
                         </div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">No Transactions Yet</h4>
-                        <p className="text-gray-600 mb-6 max-w-md mx-auto">Start your financial journey by making your first transaction. Transfer funds, make deposits, or explore our services.</p>
-                        <div className="flex items-center justify-center space-x-3">
+                        <h4 className="text-base font-semibold text-gray-900 mb-1">No Transactions Yet</h4>
+                        <p className="text-sm text-gray-600 mb-4 max-w-xl">Your recent operations will appear here once you start transferring, depositing, or withdrawing funds.</p>
+                        <div className="flex flex-wrap items-center gap-2">
                           {selectedAccountCanTransact ? (
                             <>
                               <Link
                                 to="/transfer"
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                                className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg transition-colors text-sm font-medium"
                               >
                                 Transfer Money
                               </Link>
                               <Link
                                 to="/deposit"
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                                className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg transition-colors text-sm font-medium"
                               >
                                 Make Deposit
                               </Link>
                             </>
                           ) : (
-                            <div className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
+                            <div className="inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium">
                               <Lock className="w-4 h-4 mr-2" />
                               Transfers and funding unlock after account activation
                             </div>
@@ -867,10 +863,10 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Right Sidebar */}
-            <div className="space-y-6">
+            <div className="xl:col-span-5 space-y-4">
               {/* Account Details - Enhanced Modern Design */}
               {selectedAccount && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm relative overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm relative overflow-hidden">
                   {/* Gradient Background */}
                   <div className={`absolute inset-0 opacity-5 ${
                     selectedAccount.accountType === 'savings' 
@@ -881,39 +877,39 @@ const Dashboard: React.FC = () => {
                   }`}></div>
                   
                   {/* Header */}
-                  <div className="relative z-10 flex items-center justify-between mb-6">
+                  <div className="relative z-10 flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shadow-sm ${
                         selectedAccount.accountType === 'savings' 
                           ? 'bg-gradient-to-br from-emerald-500 to-teal-600' 
                           : selectedAccount.accountType === 'checking'
                           ? 'bg-gradient-to-br from-blue-500 to-indigo-600'
                           : 'bg-gradient-to-br from-purple-500 to-pink-600'
                       }`}>
-                        <CreditCard className="w-5 h-5 text-white" />
+                        <CreditCard className="w-4 h-4 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">Account Overview</h3>
-                        <p className="text-sm text-gray-500">Selected account details</p>
+                        <h3 className="text-base font-semibold text-gray-900">Account Overview</h3>
+                        <p className="text-xs text-gray-500">Selected account snapshot</p>
                       </div>
                     </div>
                   </div>
                   
                   {/* Account Information Grid */}
-                  <div className="relative z-10 space-y-4">
+                  <div className="relative z-10 space-y-3">
                     {/* Account Holder & Balance Row */}
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div className="bg-gray-50 rounded-lg p-3">
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Account Holder</p>
                           <User className="w-4 h-4 text-gray-400" />
                         </div>
-                        <p className="text-lg font-bold text-gray-900">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-base font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
                       </div>
                     </div>
                     
                     {/* Balance Display */}
-                    <div className={`rounded-xl p-4 bg-gradient-to-br ${
+                    <div className={`rounded-lg p-3 bg-gradient-to-br ${
                       selectedAccount.accountType === 'savings' 
                         ? 'from-emerald-50 to-teal-50 border border-emerald-200' 
                         : selectedAccount.accountType === 'checking'
@@ -929,7 +925,7 @@ const Dashboard: React.FC = () => {
                           {balanceVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
-                      <p className="text-2xl font-black text-gray-900">
+                      <p className="text-xl font-bold text-gray-900">
                         {balanceVisible ? formatCurrency(selectedAccount.balance || 0) : '••••••••'}
                       </p>
                       <div className={`flex items-center mt-2 text-sm font-medium ${
@@ -1000,11 +996,11 @@ const Dashboard: React.FC = () => {
                     {/* Active Features - Compact Grid */}
                     {selectedAccount.features && Object.keys(selectedAccount.features).some(key => selectedAccount.features[key]) && (
                       <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Active Features</p>
-                        <div className="grid grid-cols-2 gap-2">
+                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Active Features</p>
+                        <div className="flex flex-wrap gap-2">
                           {Object.entries(selectedAccount.features)
                             .filter(([, enabled]) => enabled)
-                            .slice(0, 6)
+                            .slice(0, 4)
                             .map(([feature]) => {
                               const featureName = feature.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                               const getFeatureIcon = (f: string) => {
@@ -1018,22 +1014,22 @@ const Dashboard: React.FC = () => {
                               return (
                                 <div 
                                   key={feature}
-                                  className="flex items-center space-x-2 bg-white border border-gray-200 rounded-md px-2 py-1.5 text-xs"
+                                  className="inline-flex items-center space-x-1.5 bg-white border border-gray-200 rounded-full px-2.5 py-1 text-xs"
                                 >
                                   <div className="text-blue-600 flex-shrink-0">
                                     {getFeatureIcon(feature)}
                                   </div>
                                   <span className="text-gray-700 font-medium truncate">
-                                    {featureName.length > 12 ? featureName.substring(0, 12) + '...' : featureName}
+                                    {featureName.length > 11 ? featureName.substring(0, 11) + '...' : featureName}
                                   </span>
                                 </div>
                               );
                             })
                           }
                         </div>
-                        {Object.entries(selectedAccount.features).filter(([, enabled]) => enabled).length > 6 && (
+                        {Object.entries(selectedAccount.features).filter(([, enabled]) => enabled).length > 4 && (
                           <p className="text-xs text-gray-500 mt-2 text-center">
-                            +{Object.entries(selectedAccount.features).filter(([, enabled]) => enabled).length - 6} more
+                            +{Object.entries(selectedAccount.features).filter(([, enabled]) => enabled).length - 4} more
                           </p>
                         )}
                       </div>
@@ -1064,128 +1060,114 @@ const Dashboard: React.FC = () => {
               )}
 
               {/* Monthly Summary - Enhanced */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-                      <BarChart3 className="w-5 h-5 text-white" />
+                    <div className="w-9 h-9 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-900">Monthly Overview</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="text-base font-semibold text-gray-900">Monthly Overview</h3>
+                      <p className="text-xs text-gray-500">
                         {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                       </p>
                     </div>
                   </div>
                 </div>
                 
-                {/* Enhanced Empty State */}
-                <div className="text-center py-8 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-transparent to-blue-50 rounded-xl"></div>
-                  <div className="relative z-10">
-                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-teal-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <TrendingUp className="w-8 h-8 text-emerald-600" />
+                <div className="border border-gray-100 rounded-xl p-3 bg-gradient-to-br from-slate-50 via-white to-gray-50">
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="bg-white border border-gray-100 rounded-lg p-2.5">
+                      <p className="text-[11px] text-gray-500">Income</p>
+                      <p className="text-sm font-semibold text-gray-900">$0.00</p>
                     </div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">Start Your Journey</h4>
-                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                      Begin making transactions to unlock detailed insights and monthly analytics
-                    </p>
-                    
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      <button
-                        onClick={() => navigate('/transfer')}
-                        className="group bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 px-3 py-2 rounded-lg transition-all duration-200 font-medium"
-                      >
-                        <Send className="w-4 h-4 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-xs">Transfer</span>
-                      </button>
-                      <button
-                        onClick={() => navigate('/deposit')}
-                        className="group bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-3 py-2 rounded-lg transition-all duration-200 font-medium"
-                      >
-                        <Plus className="w-4 h-4 mx-auto mb-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-xs">Deposit</span>
-                      </button>
+                    <div className="bg-white border border-gray-100 rounded-lg p-2.5">
+                      <p className="text-[11px] text-gray-500">Expenses</p>
+                      <p className="text-sm font-semibold text-gray-900">$0.00</p>
                     </div>
-                    
-                    {/* Placeholder Statistics */}
-                    <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">$0</div>
-                        <div className="text-xs text-gray-500">Income</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">$0</div>
-                        <div className="text-xs text-gray-500">Expenses</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-bold text-emerald-600">$0</div>
-                        <div className="text-xs text-gray-500">Savings</div>
-                      </div>
+                    <div className="bg-white border border-gray-100 rounded-lg p-2.5">
+                      <p className="text-[11px] text-gray-500">Net</p>
+                      <p className="text-sm font-semibold text-emerald-600">$0.00</p>
                     </div>
+                  </div>
+                  <div className="h-2 rounded-full bg-gray-200 overflow-hidden mb-3">
+                    <div className="h-full w-0 bg-slate-700"></div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => navigate('/transfer')}
+                      className="bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+                    >
+                      Transfer
+                    </button>
+                    <button
+                      onClick={() => navigate('/deposit')}
+                      className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg text-xs font-medium"
+                    >
+                      Deposit
+                    </button>
                   </div>
                 </div>
               </div>
 
               {/* Quick Links - Enhanced */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-white" />
+              <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-9 h-9 bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900">Quick Actions</h3>
-                    <p className="text-sm text-gray-500">Frequently used features</p>
+                    <h3 className="text-base font-semibold text-gray-900">Quick Actions</h3>
+                    <p className="text-xs text-gray-500">Frequently used tools</p>
                   </div>
                 </div>
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-2">
                   <Link
                     to="/account"
-                    className="group flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-blue-200 hover:shadow-md"
+                    className="group flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-100 hover:border-gray-300"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-lg flex items-center justify-center transition-colors">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                      <div className="w-8 h-8 bg-slate-100 group-hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                        <FileText className="w-4 h-4 text-slate-700" />
                       </div>
                       <div>
-                        <span className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">Account Statement</span>
+                        <span className="text-sm font-medium text-gray-900">Account Statement</span>
                         <p className="text-xs text-gray-500">Download statements</p>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-slate-700 group-hover:translate-x-1 transition-all" />
                   </Link>
                   
                   <Link
                     to="/ewallets"
-                    className="group flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-emerald-200 hover:shadow-md"
+                    className="group flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-100 hover:border-gray-300"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-emerald-100 group-hover:bg-emerald-200 rounded-lg flex items-center justify-center transition-colors">
-                        <Wallet className="w-5 h-5 text-emerald-600" />
+                      <div className="w-8 h-8 bg-slate-100 group-hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                        <Wallet className="w-4 h-4 text-slate-700" />
                       </div>
                       <div>
-                        <span className="font-medium text-gray-900 group-hover:text-emerald-700 transition-colors">Digital Wallets</span>
+                        <span className="text-sm font-medium text-gray-900">Digital Wallets</span>
                         <p className="text-xs text-gray-500">Manage e-wallets</p>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-slate-700 group-hover:translate-x-1 transition-all" />
                   </Link>
                   
                   <button
                     onClick={() => setShowSecuritySettings(true)}
-                    className="group w-full flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-purple-200 hover:shadow-md"
+                    className="group w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-100 hover:border-gray-300"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-lg flex items-center justify-center transition-colors">
-                        <Lock className="w-5 h-5 text-purple-600" />
+                      <div className="w-8 h-8 bg-slate-100 group-hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                        <Lock className="w-4 h-4 text-slate-700" />
                       </div>
                       <div className="text-left">
-                        <span className="font-medium text-gray-900 group-hover:text-purple-700 transition-colors">Security Settings</span>
+                        <span className="text-sm font-medium text-gray-900">Security Settings</span>
                         <p className="text-xs text-gray-500">Manage account security</p>
                       </div>
                     </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all" />
+                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-slate-700 group-hover:translate-x-1 transition-all" />
                   </button>
                 </div>
               </div>

@@ -178,7 +178,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subt
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      <aside className={`w-80 z-50 bg-white shadow-xl fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out lg:fixed lg:inset-y-0 lg:left-0 lg:top-0 lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
@@ -308,30 +308,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subt
                 <FileText className="mr-3 h-4 w-4" />
                 Statements
               </button>
-              <button className="w-full flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors">
-                <HelpCircle className="mr-3 h-4 w-4" />
-                Help & Support
-              </button>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="px-4 py-4 border-t border-gray-100">
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
-            >
-              <LogOut className="mr-3 h-4 w-4" />
-              Sign Out
-            </button>
+          {/* Footer - Always visible */}
+          <div className="mt-auto px-4 py-4 border-t border-gray-100 bg-white">
+            <div className="space-y-2">
+              <Link
+                to="/help"
+                onClick={() => setSidebarOpen(false)}
+                className="w-full flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-lg transition-colors"
+              >
+                <HelpCircle className="mr-3 h-4 w-4" />
+                Help & Support
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 rounded-lg transition-colors"
+              >
+                <LogOut className="mr-3 h-4 w-4" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <header className="bg-white shadow-sm border-b">
+      <div className="flex-1 flex flex-col overflow-hidden lg:ml-80">
+        {/* Top Header - Sticky/Floating */}
+        <header className="sticky top-0 z-30 bg-white shadow-sm border-b">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-4">
@@ -350,16 +356,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, title, subt
               </div>
               
               <div className="flex items-center space-x-3">
-                {location.pathname !== '/dashboard' && (
-                  <Link
-                    to="/dashboard"
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                    title="Back to dashboard"
-                  >
-                    <Home className="w-4 h-4" />
-                    Dashboard
-                  </Link>
-                )}
                 <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                   <Bell className="w-5 h-5" />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
