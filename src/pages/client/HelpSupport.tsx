@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/Layout/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import ContactSupportModal from '../../components/modals/ContactSupportModal';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
 import { db } from '../../config/firebase';
-import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { 
   MessageCircle, 
   Phone, 
@@ -19,10 +20,8 @@ import {
   RefreshCw,
   FileText,
   Users,
-  Clock,
   CheckCircle,
-  AlertTriangle,
-  Info
+  AlertTriangle
 } from 'lucide-react';
 
 interface SupportTicket {
@@ -57,6 +56,11 @@ const HelpSupport: React.FC = () => {
   const [myTickets, setMyTickets] = useState<SupportTicket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(true);
   const { user } = useAuth();
+  const { getContactEmail, getContactPhone } = useSystemConfigContext();
+  const supportEmail = getContactEmail();
+  const supportPhone = getContactPhone();
+  const supportPhoneHref = `tel:${supportPhone.replace(/[^+\d]/g, '')}`;
+  const supportEmailHref = `mailto:${supportEmail}`;
 
   // Load FAQs from Firestore
     // Load user's support tickets
@@ -179,7 +183,7 @@ const HelpSupport: React.FC = () => {
               <MessageCircle className="h-6 w-6 text-blue-600" />
             </div>
             <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
-            <p className="text-sm text-gray-600 mb-4">Chat with our support team in real-time</p>
+            <p className="text-sm text-gray-600 mb-4">Start a live chat request ticket for immediate support follow-up</p>
             <Button 
               className="w-full"
               onClick={() => {
@@ -189,7 +193,7 @@ const HelpSupport: React.FC = () => {
             >
               Start Chat
             </Button>
-            <p className="text-xs text-gray-500 mt-2">Available 24/7</p>
+            <p className="text-xs text-gray-500 mt-2">Available 24/7 via support queue</p>
           </Card>
 
           <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
@@ -208,7 +212,9 @@ const HelpSupport: React.FC = () => {
             >
               Request Call Back
             </Button>
-            <p className="text-xs text-gray-500 mt-2">1-800-BANK-HELP</p>
+            <a href={supportPhoneHref} className="text-xs text-green-700 hover:text-green-800 underline mt-2 inline-block">
+              {supportPhone}
+            </a>
           </Card>
 
           <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
@@ -220,14 +226,11 @@ const HelpSupport: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full"
-              onClick={() => {
-                setSelectedContactMethod('email');
-                setContactModalOpen(true);
-              }}
+              onClick={() => window.open(supportEmailHref, '_blank')}
             >
               Send Email
             </Button>
-            <p className="text-xs text-gray-500 mt-2">Response in 24 hours</p>
+            <p className="text-xs text-gray-500 mt-2">Response in 24 hours • {supportEmail}</p>
           </Card>
         </div>
 
@@ -351,42 +354,42 @@ const HelpSupport: React.FC = () => {
                 title: 'User Guide',
                 description: 'Complete guide to using our banking platform',
                 icon: FileText,
-                link: '#'
+                link: '/help'
               },
               {
                 title: 'Security Center',
                 description: 'Learn about keeping your account secure',
                 icon: Shield,
-                link: '#'
+                link: '/profile'
               },
               {
                 title: 'Mobile App Guide',
                 description: 'How to use our mobile banking app',
                 icon: Phone,
-                link: '#'
+                link: '/help?category=mobile'
               },
               {
                 title: 'Fee Schedule',
                 description: 'Complete list of fees and charges',
                 icon: CreditCard,
-                link: '#'
+                link: '/statements'
               },
               {
                 title: 'Service Status',
                 description: 'Check current system status and outages',
                 icon: CheckCircle,
-                link: '#'
+                link: '/help?category=support'
               },
               {
                 title: 'Video Tutorials',
                 description: 'Step-by-step video guides',
                 icon: Users,
-                link: '#'
+                link: '/help?category=general'
               },
             ].map((resource) => (
-              <a
+              <Link
                 key={resource.title}
-                href={resource.link}
+                to={resource.link}
                 className="block p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all"
               >
                 <div className="flex items-center mb-3">
@@ -394,7 +397,7 @@ const HelpSupport: React.FC = () => {
                   <h4 className="font-medium text-gray-900">{resource.title}</h4>
                 </div>
                 <p className="text-sm text-gray-600">{resource.description}</p>
-              </a>
+              </Link>
             ))}
           </div>
         </Card>

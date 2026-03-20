@@ -250,7 +250,12 @@ ${autoReplyUrl ? '\n📧 Auto-reply email prepared. Check your email client for 
                   <Phone className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Call Us</p>
-                    <p className="text-sm text-blue-600">{config.contact.phone.support || config.contact.phone.primary}</p>
+                    <a
+                      href={`tel:${(config.contact.phone.support || config.contact.phone.primary).replace(/[^+\d]/g, '')}`}
+                      className="text-sm text-blue-600 hover:text-blue-700 underline"
+                    >
+                      {config.contact.phone.support || config.contact.phone.primary}
+                    </a>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
@@ -264,7 +269,12 @@ ${autoReplyUrl ? '\n📧 Auto-reply email prepared. Check your email client for 
                   <Mail className="w-5 h-5 text-purple-600" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Email</p>
-                    <p className="text-sm text-purple-600">{config.contact.email.support || getContactEmail()}</p>
+                    <a
+                      href={`mailto:${config.contact.email.support || getContactEmail()}`}
+                      className="text-sm text-purple-600 hover:text-purple-700 underline"
+                    >
+                      {config.contact.email.support || getContactEmail()}
+                    </a>
                   </div>
                 </div>
               </div>
