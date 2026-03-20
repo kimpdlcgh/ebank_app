@@ -191,35 +191,39 @@ export class PasswordSecurityService {
       // Update password in Firebase Auth directly (no re-authentication needed for temporary passwords)
       await updatePassword(user, newPassword);
 
-      // Get current IP for logging
-      const currentIP = await this.getCurrentIP();
+      // Secondary metadata/logging updates should not mark the change as failed
+      // after Firebase Auth password update already succeeded.
+      let currentIP = 'unknown';
+      try {
+        currentIP = await this.getCurrentIP();
 
-      // Update user document
-      await updateDoc(doc(db, 'users', user.uid), {
-        lastPasswordChange: serverTimestamp(),
-        mustChangePassword: false,
-        security: {
-          ...userData?.security,
-          passwordChangedAt: serverTimestamp(),
-          temporaryPasswordUsed: true,
-          passwordHistory: [
-            ...(userData?.security?.passwordHistory || []).slice(-4),
-            {
-              timestamp: new Date(),
-              ip: currentIP,
-              type: 'temporary_password_change'
-            }
-          ]
-        },
-        updatedAt: serverTimestamp()
-      });
+        await updateDoc(doc(db, 'users', user.uid), {
+          lastPasswordChange: serverTimestamp(),
+          mustChangePassword: false,
+          security: {
+            ...userData?.security,
+            passwordChangedAt: serverTimestamp(),
+            temporaryPasswordUsed: true,
+            passwordHistory: [
+              ...(userData?.security?.passwordHistory || []).slice(-4),
+              {
+                timestamp: new Date(),
+                ip: currentIP,
+                type: 'temporary_password_change'
+              }
+            ]
+          },
+          updatedAt: serverTimestamp()
+        });
 
-      // Log security event
-      await this.logSecurityEvent(user.uid, 'temporary_password_changed', {
-        timestamp: new Date(),
-        ip: currentIP,
-        userAgent: navigator.userAgent
-      });
+        await this.logSecurityEvent(user.uid, 'temporary_password_changed', {
+          timestamp: new Date(),
+          ip: currentIP,
+          userAgent: navigator.userAgent
+        });
+      } catch (metadataError) {
+        console.warn('Password changed but metadata update failed:', metadataError);
+      }
 
       // Force user to re-authenticate by signing them out
       // This ensures the new password takes effect immediately and clears any cached auth tokens
@@ -302,33 +306,37 @@ export class PasswordSecurityService {
       // Update password in Firebase Auth
       await updatePassword(user, request.newPassword);
 
-      // Get current IP for logging
-      const currentIP = await this.getCurrentIP();
+      // Secondary metadata/logging updates should not mark the change as failed
+      // after Firebase Auth password update already succeeded.
+      let currentIP = 'unknown';
+      try {
+        currentIP = await this.getCurrentIP();
 
-      // Update user document with password change timestamp
-      await updateDoc(doc(db, 'users', user.uid), {
-        lastPasswordChange: serverTimestamp(),
-        mustChangePassword: false,
-        security: {
-          ...userData?.security,
-          passwordChangedAt: serverTimestamp(),
-          passwordHistory: [
-            ...(userData?.security?.passwordHistory || []).slice(-4), // Keep last 5 passwords
-            {
-              timestamp: new Date(),
-              ip: currentIP
-            }
-          ]
-        },
-        updatedAt: serverTimestamp()
-      });
+        await updateDoc(doc(db, 'users', user.uid), {
+          lastPasswordChange: serverTimestamp(),
+          mustChangePassword: false,
+          security: {
+            ...userData?.security,
+            passwordChangedAt: serverTimestamp(),
+            passwordHistory: [
+              ...(userData?.security?.passwordHistory || []).slice(-4), // Keep last 5 passwords
+              {
+                timestamp: new Date(),
+                ip: currentIP
+              }
+            ]
+          },
+          updatedAt: serverTimestamp()
+        });
 
-      // Log security event
-      await this.logSecurityEvent(user.uid, 'password_changed', {
-        timestamp: new Date(),
-        ip: currentIP,
-        userAgent: navigator.userAgent
-      });
+        await this.logSecurityEvent(user.uid, 'password_changed', {
+          timestamp: new Date(),
+          ip: currentIP,
+          userAgent: navigator.userAgent
+        });
+      } catch (metadataError) {
+        console.warn('Password changed but metadata update failed:', metadataError);
+      }
 
       // Force user to re-authenticate by signing them out
       // This ensures the new password takes effect immediately and clears any cached auth tokens
