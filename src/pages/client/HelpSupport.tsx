@@ -21,7 +21,8 @@ import {
   FileText,
   Users,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 interface SupportTicket {
@@ -35,6 +36,14 @@ interface SupportTicket {
   timestamp: string;
   responseCount?: number;
   lastResponseAt?: string;
+}
+
+interface TicketResponse {
+  id: string;
+  message: string;
+  respondedBy: string;
+  respondedAt: string;
+  isAdminResponse: boolean;
 }
 
 interface FAQ {
@@ -61,6 +70,36 @@ const HelpSupport: React.FC = () => {
   const supportPhone = getContactPhone();
   const supportPhoneHref = `tel:${supportPhone.replace(/[^+\d]/g, '')}`;
   const supportEmailHref = `mailto:${supportEmail}`;
+  const [selectedTicketDetail, setSelectedTicketDetail] = useState<SupportTicket | null>(null);
+  const [ticketResponses, setTicketResponses] = useState<TicketResponse[]>([]);
+  const [responsesLoading, setResponsesLoading] = useState(false);
+
+  // Load responses for selected ticket
+  useEffect(() => {
+    if (!selectedTicketDetail?.id) {
+      setTicketResponses([]);
+      return;
+    }
+
+    setResponsesLoading(true);
+    const q = query(
+      collection(db, 'support_requests', selectedTicketDetail.id, 'responses'),
+      orderBy('respondedAt', 'asc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const responses: TicketResponse[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as TicketResponse));
+      setTicketResponses(responses);
+      setResponsesLoading(false);
+    }, () => {
+      setResponsesLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedTicketDetail?.id]);
 
   // Load FAQs from Firestore
     // Load user's support tickets
@@ -455,7 +494,11 @@ const HelpSupport: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {myTickets.map((ticket) => (
-                        <tr key={ticket.id} className="hover:bg-gray-50">
+                        <tr 
+                          key={ticket.id} 
+                          className="hover:bg-gray-50 cursor-pointer transition-colors"
+                          onClick={() => setSelectedTicketDetail(ticket)}
+                        >
                           <td className="py-3 px-4 font-mono text-blue-600">#{ticket.ticketId}</td>
                           <td className="py-3 px-4 text-gray-900 max-w-xs truncate">{ticket.subject}</td>
                           <td className="py-3 px-4">
@@ -480,7 +523,113 @@ const HelpSupport: React.FC = () => {
                 </div>
               )}
             </Card>
+            {/* Ticket Details Modal */}
+            {selectedTicketDetail && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="sticky top-0 flex items-center justify-between p-6 border-b bg-white">
+                    <div>
+                      <h2 className="text-xl font-semibold text-gray-900">Ticket #{selectedTicketDetail.ticketId}</h2>
+                      <p className="text-sm text-gray-500 mt-1">{selectedTicketDetail.subject}</p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedTicketDetail(null)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                  </div>
 
+                  <div className="p-6 space-y-6">
+                    {/* Ticket Details */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase">Status</p>
+                        <div className="mt-1">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getTicketStatusColor(selectedTicketDetail.status)}`}>
+                            {getTicketStatusLabel(selectedTicketDetail.status)}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase">Created</p>
+                        <p className="text-sm text-gray-900 mt-1">{new Date(selectedTicketDetail.timestamp).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase">Category</p>
+                        <p className="text-sm text-gray-900 mt-1 capitalize">{selectedTicketDetail.category}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase">Priority</p>
+                        <p className="text-sm text-gray-900 mt-1 capitalize">{selectedTicketDetail.priority}</p>
+                      </div>
+                    </div>
+
+                    {/* Original Message */}
+                    <div className="border-t pt-4">
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-2">Your Message</p>
+                      <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700 max-h-40 overflow-y-auto">
+                        {selectedTicketDetail.message}
+                      </div>
+                    </div>
+
+                    {/* Responses */}
+                    <div className="border-t pt-4">
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-3">Responses ({ticketResponses.length})</p>
+                      {responsesLoading ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                          <p className="text-xs text-gray-500">Loading responses...</p>
+                        </div>
+                      ) : ticketResponses.length === 0 ? (
+                        <div className="text-center py-6 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-500">No responses yet.</p>
+                          <p className="text-xs text-gray-400 mt-1">Our team is working on your request.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {ticketResponses.map((response) => (
+                            <div key={response.id} className={`rounded-lg p-4 ${response.isAdminResponse ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className={`text-xs font-semibold ${response.isAdminResponse ? 'text-blue-700' : 'text-gray-700'}`}>
+                                  {response.isAdminResponse ? '👨‍💼 Support Team' : '👤 You'} ({response.respondedBy})
+                                </p>
+                                <p className="text-xs text-gray-500">{new Date(response.respondedAt).toLocaleString()}</p>
+                              </div>
+                              <p className="text-sm text-gray-700 max-h-32 overflow-y-auto">{response.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="sticky bottom-0 flex gap-3 p-6 border-t bg-gray-50">
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedTicketDetail(null)}
+                      className="flex-1"
+                    >
+                      Close
+                    </Button>
+                    {selectedTicketDetail.status !== 'closed' && (
+                      <Button
+                        onClick={() => {
+                          setSelectedTicketDetail(null);
+                          setSelectedContactMethod('general');
+                          setContactModalOpen(true);
+                        }}
+                        className="flex-1"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Add Response
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             {/* Additional Resources */}
     </DashboardLayout>
   );
