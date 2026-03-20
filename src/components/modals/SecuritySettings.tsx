@@ -42,6 +42,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
     confirm: false
   });
   const [passwordStrength, setPasswordStrength] = useState<PasswordStrength | null>(null);
+  const [currentPasswordTouched, setCurrentPasswordTouched] = useState(false);
   
   // 2FA state
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -111,6 +112,11 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
       toast.error('Please enter your current password');
       return;
     }
+
+    if (!currentPasswordTouched) {
+      toast.error('Please type your current password manually before submitting');
+      return;
+    }
     
     if (!newPassword) {
       toast.error('Please enter a new password');
@@ -152,6 +158,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
           confirmPassword: '',
           twoFactorCode: ''
         });
+        setCurrentPasswordTouched(false);
         setPasswordStrength(null);
         toast.success('Password changed successfully! You will be redirected to login.');
         
@@ -357,7 +364,12 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
                     <input
                       type={showPasswords.current ? 'text' : 'password'}
                       value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                      onChange={(e) => {
+                        setCurrentPasswordTouched(true);
+                        setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }));
+                      }}
+                      autoComplete="new-password"
+                      data-lpignore="true"
                       className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -369,6 +381,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
                       {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  <p className="mt-2 text-xs text-gray-500">For security, type your current password manually (do not use autofill).</p>
                 </div>
 
                 {/* New Password */}
@@ -381,6 +394,8 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
                       type={showPasswords.new ? 'text' : 'password'}
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                      autoComplete="new-password"
+                      data-lpignore="true"
                       className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
@@ -436,6 +451,8 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ onClose }) => {
                       type={showPasswords.confirm ? 'text' : 'password'}
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                      autoComplete="new-password"
+                      data-lpignore="true"
                       className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     />
