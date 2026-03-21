@@ -1,0 +1,550 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    window.location.replace("index.html");
+  </script>
+  <title>Register - Safeguard Securities</title>
+  <link rel="stylesheet" href="wp-content/themes/hello-elementor/style.min-ver=2.5.0.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <style>
+    :root {
+      --brand-900: #0c2950;
+      --brand-700: #1f4f93;
+      --text: #1a2130;
+      --muted: #5d667a;
+      --surface: #ffffff;
+      --danger: #b3261e;
+      --success: #166534;
+      --warning: #b45309;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 18%, #eaf1ff 0%, #eaf1ff 20%, transparent 22%),
+        radial-gradient(circle at 88% 80%, #dce8fb 0%, #dce8fb 18%, transparent 20%),
+        linear-gradient(145deg, #f7f9fd, #eef3fb 55%, #f4f6fa);
+      padding: 20px;
+    }
+
+    .register-container {
+      background: var(--surface);
+      border: 1px solid #e8edf6;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 560px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(12, 41, 80, 0.12);
+      text-align: left;
+    }
+
+    .logo-wrap {
+      text-align: center;
+    }
+
+    .register-container img.logo {
+      width: 190px;
+      max-width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .register-container h2 {
+      margin: 4px 0 6px;
+      font-size: 1.55rem;
+      line-height: 1.2;
+      color: var(--brand-900);
+      text-align: center;
+    }
+
+    .register-subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .field {
+      margin: 0 0 12px;
+    }
+
+    .field label {
+      display: block;
+      margin: 0 0 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #2d3750;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .register-container input,
+    .register-container textarea {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid #cfd8e8;
+      border-radius: 10px;
+      background: #fbfdff;
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .register-container input:focus,
+    .register-container textarea:focus {
+      border-color: var(--brand-700);
+      box-shadow: 0 0 0 3px rgba(31, 79, 147, 0.15);
+      outline: none;
+    }
+
+    .password-strength {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      min-height: 18px;
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 46px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: #7b84a6;
+      cursor: pointer;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+    }
+
+    .toggle-password:hover {
+      color: #4a4de8;
+    }
+
+    .toggle-password svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .toggle-password .eye-off {
+      display: none;
+    }
+
+    .toggle-password.is-visible .eye-on {
+      display: none;
+    }
+
+    .toggle-password.is-visible .eye-off {
+      display: block;
+    }
+
+    .password-strength.weak {
+      color: var(--danger);
+    }
+
+    .password-strength.medium {
+      color: var(--warning);
+    }
+
+    .password-strength.strong {
+      color: var(--success);
+    }
+
+    .helper-text {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .checkbox-row {
+      margin: 10px 0 14px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      color: #2f3a53;
+      font-size: 0.88rem;
+    }
+
+    .checkbox-row input {
+      width: auto;
+      margin-top: 2px;
+    }
+
+    .register-container button:not(.toggle-password) {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(120deg, var(--brand-900), var(--brand-700));
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.98rem;
+      font-weight: 600;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .register-container button:not(.toggle-password):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(12, 41, 80, 0.24);
+    }
+
+    .register-container button:not(.toggle-password):disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .register-container .link {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .register-container .link a {
+      color: var(--brand-700);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .register-container .link a:hover {
+      text-decoration: underline;
+    }
+
+    .error-message {
+      color: var(--danger);
+      font-size: 0.9rem;
+      margin-top: 10px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    .error-message.success {
+      color: var(--success);
+    }
+
+    @media (max-width: 620px) {
+      .register-container {
+        padding: 24px 18px;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="register-container">
+    <div class="logo-wrap">
+      <img src="wp-content/uploads/sites/12/2022/02/logo2.png" alt="Safeguard Securities Logo" class="logo" />
+    </div>
+    <h2>Create an Account</h2>
+    <p class="register-subtitle">Use real details to protect your account and speed up verification.</p>
+    <form id="register-form">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Choose a username" minlength="4" maxlength="20" required />
+        <div class="helper-text">4-20 characters, letters and numbers only.</div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label for="first_name">First Name</label>
+          <input type="text" id="first_name" placeholder="First Name" required />
+        </div>
+        <div class="field">
+          <label for="last_name">Last Name</label>
+          <input type="text" id="last_name" placeholder="Last Name" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="middle_name">Middle Name (Optional)</label>
+        <input type="text" id="middle_name" placeholder="Middle Name" />
+      </div>
+
+      <div class="field">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required />
+      </div>
+
+      <div class="field">
+        <label for="mobile">Mobile Number</label>
+        <input type="tel" id="mobile" placeholder="e.g. +639171234567" required />
+      </div>
+
+      <div class="field">
+        <label for="address">Complete Address</label>
+        <textarea id="address" placeholder="House/Unit, Street, City, Province" rows="3" required></textarea>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="password-wrap">
+          <input type="password" id="password" placeholder="Create a strong password" minlength="8" autocomplete="new-password" required />
+          <button type="button" class="toggle-password" data-target="password" aria-label="Show password">
+            <svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a21.77 21.77 0 0 1 5.06-6.94"></path><path d="M9.9 4.24A10.93 10.93 0 0 1 12 5c7 0 11 7 11 7a21.85 21.85 0 0 1-2.16 3.19"></path><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
+        <div class="password-strength" id="password-strength">Use at least 8 characters with uppercase, lowercase, number, and symbol.</div>
+      </div>
+
+      <div class="field">
+        <label for="confirm_password">Confirm Password</label>
+        <div class="password-wrap">
+          <input type="password" id="confirm_password" placeholder="Re-enter your password" minlength="8" autocomplete="new-password" required />
+          <button type="button" class="toggle-password" data-target="confirm_password" aria-label="Show confirm password">
+            <svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a21.77 21.77 0 0 1 5.06-6.94"></path><path d="M9.9 4.24A10.93 10.93 0 0 1 12 5c7 0 11 7 11 7a21.85 21.85 0 0 1-2.16 3.19"></path><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <label class="checkbox-row" for="accept-terms">
+        <input type="checkbox" id="accept-terms" required />
+        I confirm that my details are correct and I agree to the account terms.
+      </label>
+
+      <button type="submit" id="register-button">Create Account</button>
+      <div class="error-message" id="error-message" aria-live="polite"></div>
+    </form>
+    <div class="link">
+      Already have an account? <a href="login.html">Login here</a>
+    </div>
+  </div>
+
+  <script>
+    const auth = window.firebaseAuth;
+    const db = window.firebaseDb;
+    const form = document.getElementById("register-form");
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirm_password");
+    const registerButton = document.getElementById("register-button");
+    const errorBox = document.getElementById("error-message");
+    const passwordStrength = document.getElementById("password-strength");
+    const toggleButtons = document.querySelectorAll(".toggle-password");
+
+    function setMessage(message, isSuccess) {
+      errorBox.textContent = message;
+      errorBox.classList.toggle("success", !!isSuccess);
+    }
+
+    function getPasswordScore(password) {
+      let score = 0;
+      if (password.length >= 8) score += 1;
+      if (/[A-Z]/.test(password)) score += 1;
+      if (/[a-z]/.test(password)) score += 1;
+      if (/\d/.test(password)) score += 1;
+      if (/[^A-Za-z0-9]/.test(password)) score += 1;
+      return score;
+    }
+
+    passwordInput.addEventListener("input", function () {
+      const value = passwordInput.value;
+      const score = getPasswordScore(value);
+      passwordStrength.className = "password-strength";
+
+      if (!value) {
+        passwordStrength.textContent = "Use at least 8 characters with uppercase, lowercase, number, and symbol.";
+        return;
+      }
+
+      if (score <= 2) {
+        passwordStrength.classList.add("weak");
+        passwordStrength.textContent = "Weak password";
+      } else if (score <= 4) {
+        passwordStrength.classList.add("medium");
+        passwordStrength.textContent = "Moderate password";
+      } else {
+        passwordStrength.classList.add("strong");
+        passwordStrength.textContent = "Strong password";
+      }
+    });
+
+    toggleButtons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        const targetId = button.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        button.classList.toggle("is-visible", isPassword);
+        button.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
+      });
+    });
+
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise(function(_, reject) {
+          setTimeout(function() { reject(new Error("__timeout__")); }, ms);
+        })
+      ]);
+    }
+
+    function saveLocalProfile(profile) {
+      try {
+        const raw = localStorage.getItem("sgsLocalProfiles");
+        const profiles = raw ? JSON.parse(raw) : {};
+        const key = (profile.email || "").toLowerCase();
+        if (key) {
+          profiles[key] = profile;
+          localStorage.setItem("sgsLocalProfiles", JSON.stringify(profiles));
+        }
+      } catch (err) {
+        // Ignore local storage issues.
+      }
+    }
+
+    form.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const username = document.getElementById("username").value.trim();
+      const first_name = document.getElementById("first_name").value.trim();
+      const middle_name = document.getElementById("middle_name").value.trim();
+      const last_name = document.getElementById("last_name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+
+      setMessage("", false);
+
+      if (!/^[a-zA-Z0-9_]{4,20}$/.test(username)) {
+        setMessage("Username must be 4-20 characters and use only letters, numbers, or underscore.", false);
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setMessage("Passwords do not match.", false);
+        return;
+      }
+
+      if (getPasswordScore(password) < 4) {
+        setMessage("Please choose a stronger password.", false);
+        return;
+      }
+
+      registerButton.disabled = true;
+      registerButton.textContent = "Creating account...";
+
+      try {
+        // Step 1: Create auth account (uses identitytoolkit, not firestore)
+        const created = await auth.createUserWithEmailAndPassword(email, password);
+        const userId = created.user && created.user.uid;
+
+        if (!userId) {
+          setMessage("Account created but no user ID was returned.", false);
+          return;
+        }
+
+        // Save a local username->email map as a fallback for login when Firestore is blocked.
+        try {
+          const mapRaw = localStorage.getItem("sgsLocalUserMap");
+          const map = mapRaw ? JSON.parse(mapRaw) : {};
+          map[username.toLowerCase()] = email;
+          localStorage.setItem("sgsLocalUserMap", JSON.stringify(map));
+          localStorage.setItem("sgsLastRegisteredEmail", email.toLowerCase());
+          saveLocalProfile({
+            id: userId,
+            username: username,
+            username_lower: username.toLowerCase(),
+            email: email,
+            first_name: first_name,
+            middle_name: middle_name,
+            last_name: last_name,
+            mobile: mobile,
+            address: address,
+            created_at_local: new Date().toISOString()
+          });
+          localStorage.setItem("sgsCurrentProfile", JSON.stringify({
+            id: userId,
+            username: username,
+            email: email,
+            first_name: first_name,
+            middle_name: middle_name,
+            last_name: last_name,
+            mobile: mobile,
+            address: address
+          }));
+        } catch (storageError) {
+          // Ignore storage issues, auth account is already created.
+        }
+
+        // Step 2: Save profile to Firestore (best-effort with 10s timeout)
+        try {
+          await withTimeout(
+            db.collection("profiles").doc(userId).set({
+              id: userId,
+              username: username,
+              username_lower: username.toLowerCase(),
+              email: email,
+              first_name: first_name,
+              middle_name: middle_name,
+              last_name: last_name,
+              mobile: mobile,
+              address: address,
+              created_at: firebase.firestore.FieldValue.serverTimestamp()
+            }),
+            10000
+          );
+        } catch (fsError) {
+          // Firestore save failed or timed out — account still created, profile will sync later
+          console.warn("Profile save skipped:", fsError.message);
+        }
+
+        setMessage("Registration successful. Redirecting...", true);
+        setTimeout(function() { window.location.href = "backend/ebank_app/dist/#/dashboard"; }, 1200);
+
+      } catch (error) {
+        setMessage(error.message || "Registration failed.", false);
+      } finally {
+        registerButton.disabled = false;
+        registerButton.textContent = "Create Account";
+      }
+    });
+  </script>
+</body>
+</html>

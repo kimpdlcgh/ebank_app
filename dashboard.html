@@ -1,0 +1,453 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    window.location.replace("index.html");
+  </script>
+  <title>Client Dashboard - Safeguard Securities</title>
+  <link rel="stylesheet" href="wp-content/themes/hello-elementor/style.min-ver=2.5.0.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <style>
+    :root {
+      --ink: #162746;
+      --ink-soft: #5e6b85;
+      --brand: #214c87;
+      --brand-strong: #163a6a;
+      --card: #ffffff;
+      --line: #d8e1f0;
+      --ok-bg: #e7f7ed;
+      --ok-text: #166534;
+      --warn-bg: #fff5e8;
+      --warn-text: #9a3412;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Poppins", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 8%, #eef3ff 0%, #eef3ff 18%, transparent 20%),
+        radial-gradient(circle at 85% 88%, #dce9ff 0%, #dce9ff 16%, transparent 18%),
+        linear-gradient(155deg, #f8fbff 0%, #eff4ff 48%, #f5f8ff 100%);
+      padding: 26px 16px;
+    }
+
+    .dashboard-shell {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, #10396b 0%, #214c87 60%, #2f5da0 100%);
+      border-radius: 16px;
+      padding: 18px;
+      color: #fff;
+      box-shadow: 0 12px 26px rgba(16, 57, 107, 0.24);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-wrap img {
+      width: 138px;
+      max-width: 100%;
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .welcome {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .subtext {
+      margin: 4px 0 0;
+      font-size: 0.88rem;
+      opacity: 0.9;
+    }
+
+    .logout-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      background: #fff;
+      color: var(--brand-strong);
+      cursor: pointer;
+    }
+
+    .logout-btn:hover { background: #edf3ff; }
+
+    .status-banner {
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      border: 1px solid transparent;
+      display: none;
+    }
+
+    .status-banner.ok {
+      display: block;
+      background: var(--ok-bg);
+      border-color: #b9e8c8;
+      color: var(--ok-text);
+    }
+
+    .status-banner.warn {
+      display: block;
+      background: var(--warn-bg);
+      border-color: #ffd7ae;
+      color: var(--warn-text);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid #e4ebf7;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 22px rgba(15, 33, 71, 0.08);
+    }
+
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 1.04rem;
+      color: var(--brand-strong);
+    }
+
+    .info-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .info-row {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 12px;
+      align-items: baseline;
+      border-bottom: 1px solid #eff3fb;
+      padding-bottom: 8px;
+    }
+
+    .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+      font-weight: 600;
+    }
+
+    .value {
+      font-size: 0.95rem;
+      color: #1d2d4a;
+      word-break: break-word;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      background: #f8fbff;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .metric .k {
+      font-size: 0.76rem;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .metric .v {
+      font-size: 1.15rem;
+      color: var(--brand-strong);
+      font-weight: 700;
+    }
+
+    .actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .action-btn {
+      text-align: left;
+      border: 1px solid #d8e3f7;
+      background: #f4f8ff;
+      color: #1f406f;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .action-btn:hover { background: #e9f1ff; }
+
+    .mini-note {
+      margin-top: 12px;
+      font-size: 0.83rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .info-row { grid-template-columns: 120px 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .topbar { padding: 14px; }
+      .brand-wrap img { width: 122px; }
+      .welcome { font-size: 1rem; }
+      .card { padding: 14px; }
+      .info-row { grid-template-columns: 1fr; gap: 4px; }
+      .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <img src="wp-content/uploads/sites/12/2022/02/logo2.png" alt="Safeguard Securities Logo" />
+        <div>
+          <p class="welcome">Welcome, <span id="welcome-name">Client</span></p>
+          <p class="subtext">Client account dashboard</p>
+        </div>
+      </div>
+      <button class="logout-btn" id="logout-button">Logout</button>
+    </header>
+
+    <div id="status-banner" class="status-banner"></div>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Profile Details</h2>
+        <div class="info-list">
+          <div class="info-row"><div class="label">Username</div><div class="value" id="username">Loading...</div></div>
+          <div class="info-row"><div class="label">Email</div><div class="value" id="email">Loading...</div></div>
+          <div class="info-row"><div class="label">Full Name</div><div class="value" id="full-name">Loading...</div></div>
+          <div class="info-row"><div class="label">Mobile</div><div class="value" id="mobile">-</div></div>
+          <div class="info-row"><div class="label">Address</div><div class="value" id="address">-</div></div>
+          <div class="info-row"><div class="label">Member Since</div><div class="value" id="member-since">-</div></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Account Snapshot</h2>
+        <div class="metrics">
+          <div class="metric">
+            <div class="k">Portfolio Value</div>
+            <div class="v" id="portfolio-value">$0.00</div>
+          </div>
+          <div class="metric">
+            <div class="k">Open Positions</div>
+            <div class="v" id="open-positions">0</div>
+          </div>
+          <div class="metric">
+            <div class="k">Account Status</div>
+            <div class="v" id="account-status">Active</div>
+          </div>
+          <div class="metric">
+            <div class="k">Security Level</div>
+            <div class="v" id="security-level">Standard</div>
+          </div>
+        </div>
+
+        <h2 style="margin-top:16px;">Quick Actions</h2>
+        <div class="actions">
+          <button class="action-btn" type="button" onclick="window.location.href='portfolio-management/index.html'">Open Portfolio Management</button>
+          <button class="action-btn" type="button" onclick="window.location.href='etfs/index.html'">Explore ETFs</button>
+          <button class="action-btn" type="button" onclick="window.location.href='contact/index.html'">Contact Advisor</button>
+          <button class="action-btn" type="button" onclick="window.location.href='backend/ebank_app/dist/#/client-login'">Open FRBR Client Portal</button>
+          <button class="action-btn" type="button" onclick="window.location.href='backend/ebank_app/dist/#/admin-access'">Open FRBR Admin Portal</button>
+        </div>
+        <p class="mini-note">Some advanced data may be unavailable if your browser blocks Firestore requests. Core sign-in and identity details still work.</p>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    const auth = window.firebaseAuth;
+    const db = window.firebaseDb;
+
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise(function (_, reject) {
+          setTimeout(function () { reject(new Error("timeout")); }, ms);
+        })
+      ]);
+    }
+
+    function showStatus(message, type) {
+      const banner = document.getElementById("status-banner");
+      banner.textContent = message;
+      banner.className = "status-banner " + (type || "warn");
+    }
+
+    function hideStatus() {
+      const banner = document.getElementById("status-banner");
+      banner.textContent = "";
+      banner.className = "status-banner";
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      if (value.toDate) {
+        return value.toDate().toLocaleDateString();
+      }
+      try {
+        return new Date(value).toLocaleDateString();
+      } catch (err) {
+        return "-";
+      }
+    }
+
+    function readLocalUsernameFromMap(email) {
+      if (!email || email.indexOf("@") < 0) return "";
+      try {
+        const mapRaw = localStorage.getItem("sgsLocalUserMap");
+        if (!mapRaw) return "";
+        const map = JSON.parse(mapRaw);
+        const keys = Object.keys(map);
+        for (let i = 0; i < keys.length; i += 1) {
+          const k = keys[i];
+          if (String(map[k]).toLowerCase() === email.toLowerCase()) {
+            return k;
+          }
+        }
+      } catch (err) {
+        return "";
+      }
+      return "";
+    }
+
+    function readCachedProfile(user) {
+      try {
+        const currentRaw = localStorage.getItem("sgsCurrentProfile");
+        if (currentRaw) {
+          const current = JSON.parse(currentRaw);
+          if (current && current.email && user.email && String(current.email).toLowerCase() === String(user.email).toLowerCase()) {
+            return current;
+          }
+          if (current && current.id && user.uid && current.id === user.uid) {
+            return current;
+          }
+        }
+
+        const allRaw = localStorage.getItem("sgsLocalProfiles");
+        if (allRaw && user.email) {
+          const all = JSON.parse(allRaw);
+          const byEmail = all[String(user.email).toLowerCase()];
+          if (byEmail) return byEmail;
+        }
+      } catch (err) {
+        return null;
+      }
+      return null;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      auth.onAuthStateChanged(async function (user) {
+        if (!user) {
+          window.location.href = "login.html";
+          return;
+        }
+
+        const email = user.email || "N/A";
+        const localPart = user.email && user.email.indexOf("@") > -1 ? user.email.split("@")[0] : "Client";
+        const localMappedUsername = readLocalUsernameFromMap(user.email || "");
+        const fallbackUsername = localMappedUsername || localPart;
+        const cachedProfile = readCachedProfile(user);
+
+        const cachedUsername = cachedProfile && cachedProfile.username ? cachedProfile.username : fallbackUsername;
+        const cachedFullName = cachedProfile
+          ? [cachedProfile.first_name, cachedProfile.middle_name, cachedProfile.last_name].filter(Boolean).join(" ").trim()
+          : "";
+
+        document.getElementById("welcome-name").textContent = cachedUsername;
+        document.getElementById("username").textContent = cachedUsername;
+        document.getElementById("email").textContent = (cachedProfile && cachedProfile.email) || email;
+        document.getElementById("full-name").textContent = cachedFullName || cachedUsername;
+        document.getElementById("mobile").textContent = (cachedProfile && cachedProfile.mobile) || "-";
+        document.getElementById("address").textContent = (cachedProfile && cachedProfile.address) || "-";
+        document.getElementById("member-since").textContent = formatDate(user.metadata && user.metadata.creationTime);
+
+        try {
+          const profileSnap = await withTimeout(db.collection("profiles").doc(user.uid).get(), 7000);
+          if (!profileSnap.exists) {
+            if (cachedProfile) {
+              hideStatus();
+            } else {
+              showStatus("Signed in successfully.", "ok");
+            }
+            return;
+          }
+
+          const p = profileSnap.data() || {};
+          const fullName = [p.first_name, p.middle_name, p.last_name].filter(Boolean).join(" ").trim();
+          document.getElementById("welcome-name").textContent = p.username || fallbackUsername;
+          document.getElementById("username").textContent = p.username || fallbackUsername;
+          document.getElementById("email").textContent = p.email || email;
+          document.getElementById("full-name").textContent = fullName || p.username || fallbackUsername;
+          document.getElementById("mobile").textContent = p.mobile || "-";
+          document.getElementById("address").textContent = p.address || "-";
+          document.getElementById("member-since").textContent = formatDate(p.created_at || (user.metadata && user.metadata.creationTime));
+
+          hideStatus();
+        } catch (err) {
+          if (cachedProfile) {
+            hideStatus();
+          } else {
+            showStatus("Signed in successfully.", "ok");
+          }
+        }
+      });
+    });
+
+    document.getElementById("logout-button").addEventListener("click", async function () {
+      await auth.signOut();
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>
