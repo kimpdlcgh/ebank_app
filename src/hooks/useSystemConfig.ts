@@ -5,6 +5,8 @@ import { SystemConfig } from '../types';
 
 const DEFAULT_LOGO_PATH = '/frbr_logo.png?v=20260319';
 
+const normalizeLogoAssetPath = (logoPath: string) => logoPath.toLowerCase().split('?')[0].split('#')[0];
+
 // Default system configuration
 const defaultConfig: SystemConfig = {
   id: 'main',
@@ -206,12 +208,25 @@ export const useSystemConfig = () => {
       return DEFAULT_LOGO_PATH;
     }
 
-    const normalizedPath = trimmedPath.toLowerCase();
-    if (normalizedPath === '/sglogo.png' || normalizedPath === 'sglogo.png') {
+    const normalizedPath = normalizeLogoAssetPath(trimmedPath);
+
+    if (
+      normalizedPath === '/sglogo.png' ||
+      normalizedPath === 'sglogo.png' ||
+      normalizedPath.includes('safeguard')
+    ) {
       return DEFAULT_LOGO_PATH;
     }
 
-    if (normalizedPath === '/frbr_logo.png') {
+    if (
+      normalizedPath.startsWith('data:image/') ||
+      normalizedPath.startsWith('http://') ||
+      normalizedPath.startsWith('https://')
+    ) {
+      return DEFAULT_LOGO_PATH;
+    }
+
+    if (normalizedPath === '/frbr_logo.png' || normalizedPath === 'frbr_logo.png') {
       return DEFAULT_LOGO_PATH;
     }
 
