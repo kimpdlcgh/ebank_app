@@ -49,10 +49,18 @@
     text-align: center;
   }
 
+  /* Nav labels: one step larger than theme default */
   #masthead .elementor-element-79f3d88 .hfe-menu-item,
   #masthead .elementor-element-79f3d88 .hfe-has-submenu-container > a.hfe-menu-item {
+    font-size: 1.125rem !important;
+    line-height: 1.35;
     padding-left: 6px !important;
     padding-right: 6px !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .sub-menu .hfe-sub-menu-item {
+    font-size: 1.0625rem !important;
+    line-height: 1.4;
   }
 
   #masthead .elementor-element-b821c97 .elementor-button {
@@ -386,7 +394,7 @@
     padding: 16px 20px;
     color: #ffffff !important;
     text-decoration: none !important;
-    font-size: 1rem;
+    font-size: 1.125rem;
     font-weight: 500;
     line-height: 1.4;
     background: transparent !important;
@@ -447,7 +455,7 @@
     padding: 14px 20px 14px 28px;
     color: #e8edf5 !important;
     text-decoration: none !important;
-    font-size: 0.95rem;
+    font-size: 1.0625rem;
     font-weight: 400;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: transparent !important;
@@ -487,6 +495,14 @@
 .elementor-1623 .elementor-element.elementor-element-5138209d .elementor-heading-title,
 .elementor-1793 .elementor-element.elementor-element-5138209d .elementor-heading-title {
   color: var(--e-global-color-primary, #09163c);
+}
+
+/* Custom stock-photo hero backgrounds (sector landing pages) — light overlay title */
+body.sg-hero-dark-custom .elementor-1484 .elementor-element-5138209d .elementor-heading-title {
+  color: #f4f7fc !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.88),
+    0 4px 28px rgba(0, 0, 0, 0.5);
 }
 
 /* --------------------------------------------------------------------------
@@ -626,5 +642,84 @@
   .elementor-1793 .elementor-element.elementor-element-2061489 img {
     height: 53vh;
     min-height: 300px;
+  }
+}
+
+/* Homepage — Where We Invest cards */
+.elementor-element-5544027a .elementor-inner-section .elementor-container {
+  align-items: stretch;
+}
+
+.elementor-element-5544027a .elementor-inner-section .elementor-column > .elementor-widget-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.sg-invest-card-link {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 5.25rem;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sg-invest-card-link > .happy-addon.ha-infobox,
+.sg-invest-card-link > .elementor-widget-ha-infobox.ha-infobox {
+  flex: 1 1 auto;
+  width: 100% !important;
+  max-width: 100%;
+  margin: 0 !important;
+}
+
+.elementor-element-5544027a .sg-invest-card-link .happy-addon > .elementor-widget-container {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-height: 5.25rem;
+  box-sizing: border-box;
+}
+
+.elementor-element-5544027a .sg-invest-card-link .ha-infobox-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.elementor-element-5544027a .sg-invest-card-link .ha-infobox-title {
+  color: inherit;
+  font-size: clamp(0.85rem, 1.35vw, 1rem);
+  line-height: 1.25;
+  margin: 0;
+}
+
+/* Elementor "e-transform" on Indices / Mutual Funds was shrinking/shifting the widget */
+.elementor-element-5544027a .sg-invest-card-link .e-transform {
+  transform: none !important;
+}
+
+.sg-invest-card-link:hover,
+.sg-invest-card-link:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(9, 22, 60, 0.12);
+  outline: none;
+}
+
+.elementor-element-5544027a .sg-invest-card-link {
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .elementor-element-5544027a .sg-invest-card-link .happy-addon > .elementor-widget-container {
+    min-height: 4.5rem;
+  }
+
+  .sg-invest-card-link {
+    min-height: 4.5rem;
   }
 }

@@ -1,3 +1,5 @@
+__pycache__/
+*.pyc
 .firebase/
 functions/node_modules/
 campaign-admin/node_modules/
