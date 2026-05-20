@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Safeguard Campaign Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Serif+4:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="rail">
+      <div>
+        <p class="eyebrow">Safeguard Securities</p>
+        <h1>Campaign Admin</h1>
+        <p class="muted">Contacts, previews, and bulk sending through Resend, all behind a private backend.</p>
+      </div>
+      <div class="status-panel">
+        <div class="status-item">
+          <span>Resend</span>
+          <strong id="resendStatus">Checking...</strong>
+        </div>
+        <div class="status-item">
+          <span>Contacts</span>
+          <strong id="contactCount">0</strong>
+        </div>
+        <div class="status-item">
+          <span>Last Campaign</span>
+          <strong id="lastCampaign">None yet</strong>
+        </div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="panel hero-panel">
+        <div>
+          <p class="eyebrow">Phase 1</p>
+          <h2>Web-based campaign workflow</h2>
+          <p>Manage the mailing list, preview the existing HTML template, send test emails, and launch campaigns without touching PowerShell.</p>
+        </div>
+        <div class="hero-actions">
+          <button id="previewButton" type="button" class="button ghost">Preview Template</button>
+          <button id="sendTestButton" type="button" class="button secondary">Send Test</button>
+          <button id="sendCampaignButton" type="button" class="button primary">Send Campaign</button>
+        </div>
+      </section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Settings</p>
+              <h3>Sender and company profile</h3>
+            </div>
+            <button id="saveSettingsButton" type="button" class="button ghost small">Save Settings</button>
+          </div>
+          <form id="settingsForm" class="form-grid">
+            <label>
+              <span>From name</span>
+              <input name="fromName" type="text">
+            </label>
+            <label>
+              <span>From email</span>
+              <input name="fromEmail" type="email">
+            </label>
+            <label>
+              <span>Reply-to</span>
+              <input name="replyTo" type="email">
+            </label>
+            <label>
+              <span>Default subject</span>
+              <input name="defaultSubject" type="text">
+            </label>
+            <label>
+              <span>Company name</span>
+              <input name="companyName" type="text">
+            </label>
+            <label>
+              <span>Company phone</span>
+              <input name="companyPhone" type="text">
+            </label>
+            <label class="full">
+              <span>Company address</span>
+              <input name="companyAddress" type="text">
+            </label>
+            <label>
+              <span>Website URL</span>
+              <input name="companyWebsiteUrl" type="url">
+            </label>
+            <label>
+              <span>Website text</span>
+              <input name="companyWebsiteText" type="text">
+            </label>
+            <label>
+              <span>Default advisor</span>
+              <input name="defaultAdvisorName" type="text">
+            </label>
+            <label>
+              <span>Unsubscribe URL</span>
+              <input name="unsubscribeUrl" type="url">
+            </label>
+            <label>
+              <span>Delay between sends (ms)</span>
+              <input name="sendDelayMs" type="number" min="0" step="50">
+            </label>
+          </form>
+        </article>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Audience</p>
+              <h3>Import mailing list</h3>
+            </div>
+            <div class="split-actions">
+              <button id="replaceContactsButton" type="button" class="button ghost small">Replace Contacts</button>
+              <button id="appendContactsButton" type="button" class="button ghost small">Append Contacts</button>
+            </div>
+          </div>
+          <div class="uploader">
+            <label class="dropzone">
+              <span>Choose CSV file</span>
+              <input id="csvFileInput" type="file" accept=".csv,text/csv">
+            </label>
+            <label>
+              <span>Or paste CSV</span>
+              <textarea id="csvTextInput" rows="10" placeholder="email,first_name,advisor_name"></textarea>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>First name</th>
+                  <th>Advisor</th>
+                </tr>
+              </thead>
+              <tbody id="contactsTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two-up">
+        <article class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Campaign</p>
+              <h3>Test and launch</h3>
+            </div>
+          </div>
+          <div class="form-grid compact">
+            <label class="full">
+              <span>Send test to</span>
+              <input id="testRecipientInput" type="email" placeholder="you@example.com">
+            </label>
+            <label>
+              <span>Bulk send limit</span>
+              <input id="sendLimitInput" type="number" min="1" step="1" placeholder="All contacts">
+            </label>
+            <label>
+              <span>Override delay (ms)</span>
+              <input id="sendDelayInput" type="number" min="0" step="50" placeholder="Use saved setting">
+            </label>
+          </div>
+          <div class="action-stack">
+            <button id="previewButtonSecondary" type="button" class="button secondary">Refresh Preview</button>
+            <button id="sendTestButtonSecondary" type="button" class="button secondary">Send Test Email</button>
+            <button id="sendCampaignButtonSecondary" type="button" class="button primary">Send Bulk Campaign</button>
+          </div>
+          <div id="flashMessage" class="flash hidden"></div>
+        </article>
+
+        <article class="panel preview-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Preview</p>
+              <h3>Current template render</h3>
+            </div>
+          </div>
+          <iframe id="previewFrame" title="Email preview"></iframe>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">History</p>
+            <h3>Recent campaign runs</h3>
+          </div>
+        </div>
+        <div id="campaignHistory" class="history-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">Template</p>
+            <h3>Edit the campaign HTML</h3>
+          </div>
+          <button id="saveTemplateButton" type="button" class="button ghost small">Save Template</button>
+        </div>
+        <div class="uploader">
+          <label>
+            <span>Email HTML</span>
+            <textarea id="templateEditor" rows="18" placeholder="Paste or edit campaign HTML here"></textarea>
+          </label>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

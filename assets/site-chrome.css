@@ -1,0 +1,630 @@
+/* --------------------------------------------------------------------------
+   Shared header layout (desktop) — consistent nav + Login spacing sitewide
+   -------------------------------------------------------------------------- */
+@media (min-width: 1025px) {
+  #masthead .elementor-element-707b2a0 > .elementor-container {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  #masthead .elementor-element-2f4dddd {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    min-width: 260px;
+  }
+
+  #masthead .elementor-element-914f9f9 {
+    width: auto !important;
+    flex: 1 1 auto !important;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  #masthead .elementor-element-b60dec1 {
+    width: auto !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  #masthead .elementor-element-a3f592e img {
+    width: 260px !important;
+    max-width: 260px !important;
+    height: auto;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__layout-horizontal .hfe-nav-menu {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu > li {
+    white-space: nowrap;
+    flex: 0 0 auto !important;
+    margin-right: 0 !important;
+    text-align: center;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-menu-item,
+  #masthead .elementor-element-79f3d88 .hfe-has-submenu-container > a.hfe-menu-item {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  #masthead .elementor-element-b821c97 .elementor-button {
+    padding: 14px 26px !important;
+    white-space: nowrap;
+  }
+}
+
+/* Tighter nav on mid-width desktops where Elementor 18px padding causes overlap */
+@media (max-width: 1400px) and (min-width: 1025px) {
+  #masthead .elementor-element-79f3d88 .hfe-menu-item,
+  #masthead .elementor-element-79f3d88 .hfe-has-submenu-container > a.hfe-menu-item {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  #masthead .elementor-element-b60dec1 {
+    margin-left: 16px;
+  }
+}
+
+/* Desktop: preserve original header nav (undo any mobile drawer artifacts) */
+@media (min-width: 1025px) {
+  #masthead .elementor-element-79f3d88,
+  #masthead .elementor-element-b821c97 {
+    visibility: visible !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__layout-horizontal,
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__layout-horizontal .hfe-nav-menu {
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+  }
+
+  .sg-mobile-nav-backdrop,
+  #masthead .elementor-element-79f3d88 .sg-drawer-close {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__layout-horizontal {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__layout-horizontal .hfe-nav-menu {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    width: auto !important;
+    pointer-events: auto !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu > li {
+    width: auto !important;
+    margin-right: 0 !important;
+    border-bottom: none !important;
+    white-space: nowrap;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle {
+    display: none !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .sub-menu {
+    position: absolute !important;
+    max-height: none !important;
+    overflow: visible !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: auto !important;
+    background-color: #d2d5ed !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .menu-item-has-children:hover > .sub-menu {
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+  }
+}
+
+/* Tablet / mobile: hamburger in header + body-level drawer (not HFE nav) */
+@media (max-width: 1024px) {
+  body.sg-nav-open {
+    overflow: hidden;
+  }
+
+  .sg-mobile-nav-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99990;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgba(9, 22, 60, 0.55);
+    cursor: pointer;
+    pointer-events: none;
+  }
+
+  body.sg-nav-open .sg-mobile-nav-backdrop {
+    display: block;
+    pointer-events: auto;
+  }
+
+  /* Hide original HFE flyout — we use .sg-mobile-drawer on body */
+  #masthead .elementor-element-79f3d88 nav.hfe-nav-menu__layout-horizontal {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  /* Logo left, menu toggle right — single header row on all pages */
+  #masthead .elementor-element-707b2a0 > .elementor-container {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  #masthead .elementor-element-2f4dddd {
+    grid-column: 1;
+    grid-row: 1;
+    max-width: none;
+    min-width: 0;
+  }
+
+  #masthead .elementor-element-914f9f9 {
+    grid-column: 2;
+    grid-row: 1;
+    flex: none;
+    width: auto !important;
+    min-width: 48px;
+    max-width: none;
+  }
+
+  #masthead .elementor-element-b60dec1 {
+    display: none !important;
+  }
+
+  /* Keep nav + hamburger visible (overrides HFE + Elementor entrance animations) */
+  #masthead .elementor-element-914f9f9,
+  #masthead .elementor-element-914f9f9 .elementor-widget-wrap,
+  #masthead .elementor-element-79f3d88,
+  #masthead .elementor-element-79f3d88.elementor-invisible,
+  #masthead .elementor-element-79f3d88 .elementor-widget-container {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu.hfe-layout-horizontal {
+    display: flex !important;
+    justify-content: flex-end;
+    align-items: center;
+    width: auto;
+    min-width: 48px;
+    overflow: hidden;
+    max-height: 56px;
+  }
+
+  /* HFE hides horizontal toggles by default — force show on mobile */
+  #masthead .elementor-element-79f3d88.hfe-nav-menu__breakpoint-tablet .hfe-layout-horizontal .hfe-nav-menu__toggle,
+  #masthead .elementor-element-79f3d88 .hfe-layout-horizontal .hfe-nav-menu__toggle,
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin-left: 0;
+    z-index: 100001;
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+    cursor: pointer;
+    pointer-events: auto !important;
+    flex-shrink: 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle:hover,
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle:focus {
+    background: transparent !important;
+    border: none !important;
+    outline: 2px solid rgba(9, 22, 60, 0.25);
+    outline-offset: 2px;
+  }
+
+  /* CSS hamburger (no Font Awesome dependency) */
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle .hfe-nav-menu-icon {
+    display: block !important;
+    position: relative;
+    width: 26px;
+    height: 18px;
+    font-size: 0 !important;
+    line-height: 0;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle .hfe-nav-menu-icon::before,
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle .hfe-nav-menu-icon::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--e-global-color-primary, #09163c);
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle .hfe-nav-menu-icon::before {
+    top: 0;
+    box-shadow: 0 7px 0 var(--e-global-color-primary, #09163c);
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle .hfe-nav-menu-icon::after {
+    bottom: 0;
+  }
+
+  #masthead .elementor-element-79f3d88 .hfe-nav-menu__toggle .hfe-nav-menu-icon i {
+    display: none !important;
+  }
+}
+
+/* Body-level mobile drawer (built by site-chrome.js) */
+.sg-mobile-drawer {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .sg-mobile-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(320px, 100vw);
+    max-width: 100%;
+    height: auto;
+    max-height: min(100dvh, calc(100vh - env(safe-area-inset-top)));
+    margin: 0;
+    padding: 0;
+    background: #0c1830;
+    z-index: 99999;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.35);
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    pointer-events: none;
+    visibility: hidden;
+    align-self: flex-start;
+  }
+
+  body.sg-nav-open .sg-mobile-drawer {
+    transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
+  }
+
+  .sg-mobile-drawer__close {
+    flex: 0 0 56px;
+    width: 100%;
+    height: 56px;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: #ffffff;
+    color: #4b5563;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .sg-mobile-drawer__close:hover {
+    color: #09163c;
+  }
+
+  .sg-mobile-drawer__list {
+    flex: 0 1 auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: calc(100dvh - 56px);
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .sg-mobile-drawer__item {
+    margin: 0;
+    padding: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    flex: 0 0 auto;
+  }
+
+  .sg-mobile-drawer__row {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .sg-mobile-drawer__link {
+    flex: 1 1 auto;
+    display: block;
+    padding: 16px 20px;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+    background: transparent !important;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .sg-mobile-drawer__link--solo {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .sg-mobile-drawer__link:hover,
+  .sg-mobile-drawer__link:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+  }
+
+  .sg-mobile-drawer__subtoggle {
+    flex: 0 0 52px;
+    width: 52px;
+    border: 0;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .sg-mobile-drawer__subtoggle::after {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 8px;
+    margin: 0 auto;
+    border-right: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: rotate(45deg);
+    transition: transform 0.2s ease;
+  }
+
+  .sg-mobile-drawer__item--open > .sg-mobile-drawer__row .sg-mobile-drawer__subtoggle::after {
+    transform: rotate(-135deg);
+  }
+
+  .sg-mobile-drawer__sublist {
+    display: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .sg-mobile-drawer__item--open > .sg-mobile-drawer__sublist {
+    display: block;
+  }
+
+  .sg-mobile-drawer__sublink {
+    display: block;
+    padding: 14px 20px 14px 28px;
+    color: #e8edf5 !important;
+    text-decoration: none !important;
+    font-size: 0.95rem;
+    font-weight: 400;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: transparent !important;
+  }
+
+  .sg-mobile-drawer__sublink:hover,
+  .sg-mobile-drawer__sublink:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+  }
+}
+
+/* Hero pages: keep title visible in masked cutout area (About, Our Team, Services) */
+.elementor-930 .elementor-element.elementor-element-79900463,
+.elementor-1290 .elementor-element.elementor-element-79900463,
+.elementor-1043 .elementor-element.elementor-element-79900463,
+.elementor-1484 .elementor-element.elementor-element-79900463,
+.elementor-1623 .elementor-element.elementor-element-79900463,
+.elementor-1793 .elementor-element.elementor-element-79900463 {
+  position: relative;
+}
+
+.elementor-930 .elementor-element.elementor-element-5138209d,
+.elementor-1290 .elementor-element.elementor-element-5138209d,
+.elementor-1043 .elementor-element.elementor-element-5138209d,
+.elementor-1484 .elementor-element.elementor-element-5138209d,
+.elementor-1623 .elementor-element.elementor-element-5138209d,
+.elementor-1793 .elementor-element.elementor-element-5138209d {
+  position: relative;
+  z-index: 3;
+}
+
+.elementor-930 .elementor-element.elementor-element-5138209d .elementor-heading-title,
+.elementor-1290 .elementor-element.elementor-element-5138209d .elementor-heading-title,
+.elementor-1043 .elementor-element.elementor-element-5138209d .elementor-heading-title,
+.elementor-1484 .elementor-element.elementor-element-5138209d .elementor-heading-title,
+.elementor-1623 .elementor-element.elementor-element-5138209d .elementor-heading-title,
+.elementor-1793 .elementor-element.elementor-element-5138209d .elementor-heading-title {
+  color: var(--e-global-color-primary, #09163c);
+}
+
+/* --------------------------------------------------------------------------
+   Masked hero section: desktop -> tablet -> mobile
+   -------------------------------------------------------------------------- */
+.elementor-element.elementor-element-79900463 > .elementor-widget-wrap {
+  padding: 0;
+}
+
+.elementor-element.elementor-element-2061489 .elementor-widget-container,
+.elementor-element.elementor-element-2061489 img {
+  display: block;
+  width: 100%;
+}
+
+.elementor-element.elementor-element-2061489 img {
+  object-fit: cover;
+  object-position: center center;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .elementor-element.elementor-element-16712947.elementor-section-boxed > .elementor-container {
+    max-width: 100%;
+    width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .elementor-element.elementor-element-2061489 img {
+    height: 42vh !important;
+    min-height: 260px;
+  }
+
+  .elementor-element.elementor-element-5138209d > .elementor-widget-container {
+    margin: -10% 0 0 3% !important;
+  }
+
+  .elementor-element.elementor-element-5138209d .elementor-heading-title {
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+    line-height: 1.2;
+  }
+
+  /* Contact: stop overlay block from covering the hero on tablet/mobile */
+  .elementor-1793 .elementor-element.elementor-element-a6f33e5 {
+    position: relative !important;
+    z-index: 2;
+  }
+
+  .elementor-1793 .elementor-element.elementor-element-a6f33e5 > .elementor-widget-container {
+    margin: 0.75rem 0 0 0 !important;
+    padding: 0 !important;
+    text-align: left;
+  }
+
+  .elementor-1793 .elementor-element.elementor-element-a6f33e5 .elementor-image-box-wrapper {
+    text-align: left;
+  }
+
+  .elementor-1793 .elementor-element.elementor-element-a6f33e5 .elementor-image-box-title {
+    display: none;
+  }
+
+  .elementor-1793 .elementor-element.elementor-element-a6f33e5 .elementor-image-box-description {
+    color: var(--e-global-color-secondary, #4a5568) !important;
+    font-size: 1rem;
+    margin-top: 0.35rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  #masthead .elementor-section.elementor-top-section > .elementor-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  #masthead .elementor-element-a3f592e img {
+    width: auto !important;
+    max-width: 52vw !important;
+    height: auto;
+  }
+
+  #masthead .elementor-element-b821c97 .elementor-button {
+    padding: 10px 16px !important;
+    font-size: 14px;
+  }
+
+  #masthead .hfe-nav-menu__toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .elementor-element.elementor-element-16712947.elementor-section-boxed > .elementor-container {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .elementor-element.elementor-element-2061489 img {
+    height: 38vh !important;
+    min-height: 220px;
+    border-radius: 12px !important;
+  }
+
+  .elementor-element.elementor-element-2061489.elementor-widget-image .elementor-widget-container img,
+  .elementor-element.elementor-element-2061489:not(.elementor-widget-image) .elementor-widget-container {
+    -webkit-mask-size: cover;
+    mask-size: cover;
+    -webkit-mask-position: center bottom;
+    mask-position: center bottom;
+  }
+
+  .elementor-element.elementor-element-5138209d > .elementor-widget-container {
+    margin: -20% 0 0 5% !important;
+    padding-left: 2px;
+  }
+
+  .elementor-element.elementor-element-5138209d .elementor-heading-title {
+    font-size: clamp(1.15rem, 5vw, 1.5rem);
+    line-height: 1.15;
+    font-weight: 600;
+  }
+}
+
+/* Large desktop: preserve full-height hero */
+@media (min-width: 1025px) {
+  .elementor-1290 .elementor-element.elementor-element-2061489 img,
+  .elementor-1043 .elementor-element.elementor-element-2061489 img,
+  .elementor-1484 .elementor-element.elementor-element-2061489 img,
+  .elementor-930 .elementor-element.elementor-element-2061489 img,
+  .elementor-1623 .elementor-element.elementor-element-2061489 img {
+    height: 60vh;
+    min-height: 320px;
+  }
+
+  .elementor-1793 .elementor-element.elementor-element-2061489 img {
+    height: 53vh;
+    min-height: 300px;
+  }
+}

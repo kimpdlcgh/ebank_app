@@ -1,0 +1,8 @@
+.firebase/
+functions/node_modules/
+campaign-admin/node_modules/
+campaign-admin/.env
+campaign-admin/data/*.json
+firebase-debug.log
+safeguardsecurities.zip
+recipients.csv

@@ -1,0 +1,17 @@
+{
+  "name": "safeguard-campaign-admin",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Custom campaign admin for Safeguard Securities using Resend.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
