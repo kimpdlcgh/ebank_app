@@ -20,7 +20,8 @@ import {
   HelpCircle,
   Globe,
   Key,
-  Bell
+  Bell,
+  Eye
 } from 'lucide-react';
 import LogoDisplay from '../ui/LogoDisplay';
 import NotificationCenter from '../admin/NotificationCenter';
@@ -152,9 +153,17 @@ const adminNavigationItems: Array<{
     description: 'Compliance review',
     permission: 'canViewReports'
   },
-  { 
-    id: 'settings', 
-    label: 'System Settings', 
+  {
+    id: 'client-viewer',
+    label: 'Client Account Viewer',
+    icon: Eye,
+    path: '/admin/client-viewer',
+    description: 'View any client account instantly',
+    permission: 'canManageSettings'
+  },
+  {
+    id: 'settings',
+    label: 'System Settings',
     icon: Settings, 
     path: '/admin/settings',
     description: 'System configuration',
@@ -280,7 +289,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title, subtitle }) 
         {/* Navigation */}
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {adminNavigationItems.filter(item => {
-            if (item.id === 'settings' && user?.role !== UserRole.SUPER_ADMIN) {
+            if ((item.id === 'settings' || item.id === 'client-viewer') && user?.role !== UserRole.SUPER_ADMIN) {
               return false;
             }
             return !item.permission || hasAdminPermission(user, item.permission);

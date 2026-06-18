@@ -40,10 +40,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../config/firebase';
+import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import toast from 'react-hot-toast';
 import ContactSupportModal from '../../components/modals/ContactSupportModal';
-
-const mockTransactions: any[] = [];
 
 // Sidebar navigation items
 const navigationItems = [
@@ -117,6 +117,9 @@ const Dashboard: React.FC = () => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(true);
   const [showSecuritySettings, setShowSecuritySettings] = useState(false);
+  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  const [monthlyIncome, setMonthlyIncome] = useState(0);
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
 
   const getAccountStatus = (account: any) => {
     return String(account?.status ?? (account?.isActive ? 'active' : 'inactive')).toLowerCase();
@@ -215,6 +218,31 @@ const Dashboard: React.FC = () => {
       }
     };
   }, [user?.uid]); // Only depend on user ID to avoid unnecessary re-subscriptions
+
+  // Real-time recent transactions + monthly metrics
+  useEffect(() => {
+    if (!user?.uid) return;
+    const q = query(
+      collection(db, 'transactions'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(10)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      const txns = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setRecentTransactions(txns);
+
+      const now = new Date();
+      const monthTxns = txns.filter((t: any) => {
+        const d = t.createdAt?.toDate ? t.createdAt.toDate() : new Date(t.createdAt || 0);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      const isCredit = (t: any) => t.type === 'deposit' || t.type === 'credit' || (t.amount > 0 && t.type !== 'withdrawal' && t.type !== 'debit');
+      setMonthlyIncome(monthTxns.filter(isCredit).reduce((s: number, t: any) => s + Math.abs(t.amount || 0), 0));
+      setMonthlyExpenses(monthTxns.filter((t: any) => !isCredit(t)).reduce((s: number, t: any) => s + Math.abs(t.amount || 0), 0));
+    }, () => {});
+    return () => unsub();
+  }, [user?.uid]);
 
   const handleSignOut = async () => {
     try {
@@ -775,7 +803,7 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {mockTransactions.length === 0 ? (
+                  {recentTransactions.length === 0 ? (
                     <div className="text-left py-6 px-4 relative overflow-hidden border border-gray-100 rounded-xl bg-gradient-to-br from-slate-50 via-white to-gray-50">
                       <div className="relative z-10">
                         <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
@@ -809,7 +837,7 @@ const Dashboard: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    mockTransactions.map((transaction) => (
+                    recentTransactions.map((transaction) => (
                     <div
                       key={transaction.id}
                       className="group flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 rounded-xl transition-all duration-200 border border-gray-100 hover:border-blue-200 hover:shadow-md"
@@ -828,15 +856,17 @@ const Dashboard: React.FC = () => {
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
-                            {transaction.description}
+                            {transaction.description || transaction.type || 'Transaction'}
                           </p>
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-500">{transaction.category}</span>
+                            <span className="text-sm text-gray-500 capitalize">{transaction.type || 'payment'}</span>
                             <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-                            <span className="text-sm text-gray-500">{transaction.date}</span>
+                            <span className="text-sm text-gray-500">
+                              {(() => { const d = transaction.createdAt?.toDate ? transaction.createdAt.toDate() : new Date(transaction.createdAt || 0); return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); })()}
+                            </span>
                             <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
                             <span className="text-xs text-gray-400 capitalize px-2 py-0.5 bg-gray-100 rounded-md">
-                              {transaction.type}
+                              {transaction.status || 'completed'}
                             </span>
                           </div>
                         </div>
@@ -1079,19 +1109,19 @@ const Dashboard: React.FC = () => {
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     <div className="bg-white border border-gray-100 rounded-lg p-2.5">
                       <p className="text-[11px] text-gray-500">Income</p>
-                      <p className="text-sm font-semibold text-gray-900">$0.00</p>
+                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(monthlyIncome)}</p>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-lg p-2.5">
                       <p className="text-[11px] text-gray-500">Expenses</p>
-                      <p className="text-sm font-semibold text-gray-900">$0.00</p>
+                      <p className="text-sm font-semibold text-gray-900">{formatCurrency(monthlyExpenses)}</p>
                     </div>
                     <div className="bg-white border border-gray-100 rounded-lg p-2.5">
                       <p className="text-[11px] text-gray-500">Net</p>
-                      <p className="text-sm font-semibold text-emerald-600">$0.00</p>
+                      <p className={`text-sm font-semibold ${monthlyIncome >= monthlyExpenses ? 'text-emerald-600' : 'text-red-500'}`}>{formatCurrency(monthlyIncome - monthlyExpenses)}</p>
                     </div>
                   </div>
                   <div className="h-2 rounded-full bg-gray-200 overflow-hidden mb-3">
-                    <div className="h-full w-0 bg-slate-700"></div>
+                    <div className="h-full bg-slate-700" style={{ width: monthlyIncome > 0 ? `${Math.min(100, (monthlyIncome / (monthlyIncome + monthlyExpenses)) * 100)}%` : '0%' }}></div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
                     <button

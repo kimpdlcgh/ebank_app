@@ -184,7 +184,22 @@ const Profile: React.FC = () => {
   // Initialize form data when user data is loaded
   useEffect(() => {
     resetFormFromUser(user);
+    if ((user as any)?.notificationSettings) {
+      setNotificationSettings((user as any).notificationSettings);
+    }
   }, [user]);
+
+  const handleNotificationToggle = async (key: string) => {
+    if (!user?.uid) return;
+    const updated = { ...notificationSettings, [key]: !notificationSettings[key as keyof typeof notificationSettings] };
+    setNotificationSettings(updated);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), { notificationSettings: updated, updatedAt: new Date() });
+    } catch {
+      setNotificationSettings(notificationSettings);
+      toast.error('Failed to save notification settings');
+    }
+  };
 
   // Handle form input changes
   const handleInputChange = (section: string, field: string, value: string) => {
@@ -236,6 +251,7 @@ const Profile: React.FC = () => {
         phoneNumber: formData.phoneNumber,
       });
 
+      toast.success('Profile saved successfully');
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -964,10 +980,7 @@ const Profile: React.FC = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => setNotificationSettings(prev => ({
-                      ...prev,
-                      [setting.key]: !prev[setting.key as keyof typeof prev]
-                    }))}
+                    onClick={() => handleNotificationToggle(setting.key)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full ${
                       notificationSettings[setting.key as keyof typeof notificationSettings] ? 'bg-blue-600' : 'bg-gray-200'
                     }`}

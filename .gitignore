@@ -28,6 +28,9 @@ dist-ssr
 firebase-debug.log
 firestore-debug.log
 
+# Firebase service account keys (contain private keys — never commit)
+*-firebase-adminsdk-*.json
+
 # Environment variables
 .env
 .env.local

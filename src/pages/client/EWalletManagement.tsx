@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 import { 
   Smartphone, 
   CreditCard, 
@@ -71,6 +74,7 @@ const availableWallets = [
 ];
 
 const EWalletManagement: React.FC = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [showBalances, setShowBalances] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -85,22 +89,28 @@ const EWalletManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Load wallet data from Firebase
-  React.useEffect(() => {
-    const loadWalletData = async () => {
-      try {
-        // TODO: Load from Firebase
-        // For now, set empty arrays to remove mock data
-        setConnectedWallets([]);
-        setRecentTransactions([]);
-      } catch (error) {
-        console.error('Error loading wallet data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  useEffect(() => {
+    if (!user?.uid) return;
+    // Load connected wallets
+    const wq = query(collection(db, 'wallets'), where('userId', '==', user.uid));
+    const wUnsub = onSnapshot(wq, (snap) => {
+      setConnectedWallets(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    }, () => setLoading(false));
 
-    loadWalletData();
-  }, []);
+    // Load wallet transactions
+    const tq = query(
+      collection(db, 'transactions'),
+      where('userId', '==', user.uid),
+      where('source', '==', 'wallet'),
+      orderBy('createdAt', 'desc')
+    );
+    const tUnsub = onSnapshot(tq, (snap) => {
+      setRecentTransactions(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    }, () => {});
+
+    return () => { wUnsub(); tUnsub(); };
+  }, [user?.uid]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {

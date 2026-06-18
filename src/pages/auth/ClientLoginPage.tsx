@@ -337,19 +337,14 @@ const ClientLoginPage: React.FC = () => {
               </div>
             </form>
 
-            {/* Forgot Password Link - Opens Modal */}
+            {/* Forgot Password Link */}
             <div className="mt-4 text-center">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setShowResetModal(true);
-                }}
-                className="text-sm text-green-600 hover:text-green-800 font-medium cursor-pointer transition-colors duration-200 underline hover:no-underline focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded-md px-2 py-1"
+              <Link
+                to="/client-forgot-password"
+                className="text-sm text-green-600 hover:text-green-800 font-medium transition-colors duration-200 underline hover:no-underline"
               >
                 Forgot your password?
-              </button>
+              </Link>
             </div>
 
             {/* Support Links */}

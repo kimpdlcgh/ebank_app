@@ -410,6 +410,15 @@ const AdminAccessPage: React.FC = () => {
             >
               Sign in
             </button>
+
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-indigo-600 hover:text-indigo-800 transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
           </form>
           </>
           ) : (

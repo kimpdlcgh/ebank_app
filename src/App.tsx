@@ -10,6 +10,8 @@ const ClientLoginPage = React.lazy(() => import('./pages/auth/ClientLoginPage'))
 const ChangePasswordPage = React.lazy(() => import('./pages/auth/ChangePasswordPage'));
 const PasswordResetActionPage = React.lazy(() => import('./pages/auth/PasswordResetActionPage'));
 const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ClientForgotPasswordPage = React.lazy(() => import('./pages/auth/ClientForgotPasswordPage'));
+const ClientAccountViewer = React.lazy(() => import('./pages/admin/ClientAccountViewer'));
 const AdminAccessPage = React.lazy(() => import('./pages/auth/AdminAccessPage'));
 
 const ClientDashboard = React.lazy(() => import('./pages/client/Dashboard'));
@@ -157,6 +159,14 @@ function AppContent() {
           element={
             <PublicRoute>
               <ForgotPasswordPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/client-forgot-password"
+          element={
+            <PublicRoute>
+              <ClientForgotPasswordPage />
             </PublicRoute>
           }
         />
@@ -391,6 +401,14 @@ function AppContent() {
           element={
             <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
               <SystemSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/client-viewer"
+          element={
+            <ProtectedRoute requiredRole={UserRole.SUPER_ADMIN}>
+              <ClientAccountViewer />
             </ProtectedRoute>
           }
         />
