@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Portal - Safeguard Securities</title>
+  <link rel="stylesheet" href="wp-content/themes/hello-elementor/style.min-ver=2.5.0.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="firebase-init.js"></script>
+  <style>
+    :root {
+      --ink: #162746;
+      --brand: #214c87;
+      --brand-strong: #10396b;
+      --bg: #f4f7fa;
+      --white: #ffffff;
+      --border: #dce3f1;
+    }
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    .admin-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: var(--white);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .stat-card h3 { margin: 0; font-size: 0.85rem; color: #5e6b85; text-transform: uppercase; }
+    .stat-card p { margin: 10px 0 0; font-size: 1.8rem; font-weight: 700; color: var(--brand); }
+    
+    .user-table-card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      width: 250px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      text-align: left;
+      padding: 15px 20px;
+      background: #f8fafc;
+      font-size: 0.85rem;
+      color: #5e6b85;
+    }
+    td {
+      padding: 15px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.9rem;
+    }
+    .status-pill {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #e2e8f0;
+    }
+    .status-pill.active { background: #dcfce7; color: #166534; }
+    
+    #auth-overlay {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: var(--white); z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-brand { background: var(--brand); color: white; }
+  </style>
+</head>
+<body>
+  <div id="auth-overlay">
+    <p>Verifying Administrator Privileges...</p>
+  </div>
+
+  <div class="admin-container">
+    <header class="header">
+      <h1>Admin Dashboard</h1>
+      <div>
+        <a href="dashboard.html" class="btn" style="color: var(--brand)">Client View</a>
+        <button id="logout-btn" class="btn btn-brand">Logout</button>
+      </div>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Total Clients</h3>
+        <p id="total-users">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Active Sessions</h3>
+        <p id="active-sessions">1</p>
+      </div>
+    </div>
+
+    <div class="user-table-card">
+      <div class="table-header">
+        <h2>Registered Users</h2>
+        <input type="text" id="search" class="search-input" placeholder="Search by email...">
+      </div>
+      <table id="user-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Mobile</th>
+            <th>Address</th>
+            <th>Username</th>
+            <th>Joined</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="user-list">
+          <tr><td colspan="5" style="text-align:center">Loading client data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const auth = window.firebaseAuth;
+    const db = window.firebaseDb;
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = "/signin";
+        return;
+      }
+
+      // Authorization Check
+      try {
+        const profileDoc = await db.collection("profiles").doc(user.uid).get();
+        const data = profileDoc.data();
+        
+        if (!data || !data.is_admin) {
+          alert("Access Denied: Administrator privileges required.");
+          window.location.href = "dashboard.html";
+          return;
+        }
+        
+        document.getElementById("auth-overlay").style.display = "none";
+        loadUsers();
+      } catch (err) {
+        console.error("Auth error:", err);
+        window.location.href = "dashboard.html";
+      }
+    });
+
+    let usersUnsubscribe = null;
+
+    function loadUsers() {
+      const list = document.getElementById("user-list");
+      
+      // Establishing the Sync Capture Listener
+      usersUnsubscribe = db.collection("profiles").orderBy("created_at", "desc").onSnapshot((snapshot) => {
+        list.innerHTML = "";
+        document.getElementById("total-users").textContent = snapshot.size;
+
+        snapshot.forEach(doc => {
+          const p = doc.data();
+          const row = document.createElement("tr");
+          const joined = p.created_at ? (p.created_at.toDate ? p.created_at.toDate().toLocaleDateString() : new Date(p.created_at).toLocaleDateString()) : "N/A";
+          
+          row.innerHTML = `
+            <td>${p.first_name || ''} ${p.last_name || 'User'}</td>
+            <td>${p.email || 'N/A'}</td>
+            <td>${p.mobile || '-'}</td>
+            <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.address || ''}">${p.address || '-'}</td>
+            <td>${p.username || '-'}</td>
+            <td>${joined}</td>
+            <td><span class="status-pill active">Active</span></td>
+          `;
+          list.appendChild(row);
+        });
+      }, (error) => {
+        console.error("Sync Error:", error);
+        list.innerHTML = `<tr><td colspan="7" style="text-align:center; color:red">Real-time sync failed. Check database permissions.</td></tr>`;
+      });
+    }
+
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      auth.signOut().then(() => window.location.href = "/signin");
+    });
+
+    // Basic Search logic
+    document.getElementById("search").addEventListener("input", (e) => {
+      const term = e.target.value.toLowerCase();
+      const rows = document.querySelectorAll("#user-list tr");
+      rows.forEach(row => {
+        const email = row.children[1].textContent.toLowerCase();
+        row.style.display = email.includes(term) ? "" : "none";
+      });
+    });
+  </script>
+</body>
+</html>

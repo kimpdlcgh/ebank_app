@@ -271,6 +271,11 @@
       }
     }
   </style>
+<link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+<meta name="msapplication-TileImage" content="/assets/favicon/favicon-192x192.png">
 </head>
 <body>
   <div class="register-container">
@@ -510,30 +515,22 @@
           // Ignore storage issues, auth account is already created.
         }
 
-        // Step 2: Save profile to Firestore (best-effort with 10s timeout)
-        try {
-          await withTimeout(
-            db.collection("profiles").doc(userId).set({
-              id: userId,
-              username: username,
-              username_lower: username.toLowerCase(),
-              email: email,
-              first_name: first_name,
-              middle_name: middle_name,
-              last_name: last_name,
-              mobile: mobile,
-              address: address,
-              created_at: firebase.firestore.FieldValue.serverTimestamp()
-            }),
-            10000
-          );
-        } catch (fsError) {
-          // Firestore save failed or timed out — account still created, profile will sync later
-          console.warn("Profile save skipped:", fsError.message);
-        }
+        // Step 2: Synchronous database capture (Mandatory)
+        await db.collection("profiles").doc(userId).set({
+          id: userId,
+          username: username,
+          username_lower: username.toLowerCase(),
+          email: email,
+          first_name: first_name,
+          middle_name: middle_name,
+          last_name: last_name,
+          mobile: mobile,
+          address: address,
+          created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
         setMessage("Registration successful. Redirecting...", true);
-        setTimeout(function() { window.location.href = "backend/ebank_app/dist/#/dashboard"; }, 1200);
+        setTimeout(function() { window.location.replace("/dashboard"); }, 1200);
 
       } catch (error) {
         setMessage(error.message || "Registration failed.", false);

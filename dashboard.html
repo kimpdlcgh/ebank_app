@@ -218,6 +218,14 @@
 
     .action-btn:hover { background: #e9f1ff; }
 
+    .action-btn.danger {
+      border-color: #f0c4c2;
+      background: #fff5f4;
+      color: #9f1f18;
+    }
+
+    .action-btn.danger:hover { background: #fdecea; }
+
     .mini-note {
       margin-top: 12px;
       font-size: 0.83rem;
@@ -239,6 +247,11 @@
       .metrics { grid-template-columns: 1fr; }
     }
   </style>
+<link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+<meta name="msapplication-TileImage" content="/assets/favicon/favicon-192x192.png">
 </head>
 <body>
   <div class="dashboard-shell">
@@ -294,8 +307,9 @@
           <button class="action-btn" type="button" onclick="window.location.href='portfolio-management/index.html'">Open Portfolio Management</button>
           <button class="action-btn" type="button" onclick="window.location.href='etfs/index.html'">Explore ETFs</button>
           <button class="action-btn" type="button" onclick="window.location.href='contact/index.html'">Contact Advisor</button>
-          <button class="action-btn" type="button" onclick="window.location.href='backend/ebank_app/dist/#/client-login'">Open FRBR Client Portal</button>
-          <button class="action-btn" type="button" onclick="window.location.href='backend/ebank_app/dist/#/admin-access'">Open FRBR Admin Portal</button>
+          <button class="action-btn" type="button" onclick="window.location.href='https://app.safeguardsecurities.us/#/client-login'">Open FRBR Client Portal</button>
+          <button class="action-btn" style="border-color: var(--brand); background: #eef3ff;" type="button" onclick="window.location.href='admin.html'">Local Admin Dashboard</button>
+          <button class="action-btn danger" type="button" onclick="window.location.href='delete-account/'">Delete or close account</button>
         </div>
         <p class="mini-note">Some advanced data may be unavailable if your browser blocks Firestore requests. Core sign-in and identity details still work.</p>
       </article>
@@ -383,41 +397,61 @@
       return null;
     }
 
+    function redirectToLogin() {
+      window.location.replace("/signin");
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
+      var pendingNullCheck = null;
+
       auth.onAuthStateChanged(async function (user) {
         if (!user) {
-          window.location.href = "login.html";
+          if (pendingNullCheck) {
+            clearTimeout(pendingNullCheck);
+          }
+          pendingNullCheck = setTimeout(function () {
+            pendingNullCheck = null;
+            if (!auth.currentUser) {
+              redirectToLogin();
+            }
+          }, 600);
           return;
         }
 
-        const email = user.email || "N/A";
-        const localPart = user.email && user.email.indexOf("@") > -1 ? user.email.split("@")[0] : "Client";
-        const localMappedUsername = readLocalUsernameFromMap(user.email || "");
-        const fallbackUsername = localMappedUsername || localPart;
-        const cachedProfile = readCachedProfile(user);
+        if (pendingNullCheck) {
+          clearTimeout(pendingNullCheck);
+          pendingNullCheck = null;
+        }
 
-        const cachedUsername = cachedProfile && cachedProfile.username ? cachedProfile.username : fallbackUsername;
-        const cachedFullName = cachedProfile
-          ? [cachedProfile.first_name, cachedProfile.middle_name, cachedProfile.last_name].filter(Boolean).join(" ").trim()
-          : "";
+        // Set up a real-time listener for the user's profile
+        db.collection("profiles").doc(user.uid).onSnapshot(function (profileSnap) {
+          const email = user.email || "N/A";
+          const localPart = user.email && user.email.indexOf("@") > -1 ? user.email.split("@")[0] : "Client";
+          const localMappedUsername = readLocalUsernameFromMap(user.email || "");
+          const fallbackUsername = localMappedUsername || localPart;
+          const cachedProfile = readCachedProfile(user);
 
-        document.getElementById("welcome-name").textContent = cachedUsername;
-        document.getElementById("username").textContent = cachedUsername;
-        document.getElementById("email").textContent = (cachedProfile && cachedProfile.email) || email;
-        document.getElementById("full-name").textContent = cachedFullName || cachedUsername;
-        document.getElementById("mobile").textContent = (cachedProfile && cachedProfile.mobile) || "-";
-        document.getElementById("address").textContent = (cachedProfile && cachedProfile.address) || "-";
-        document.getElementById("member-since").textContent = formatDate(user.metadata && user.metadata.creationTime);
+          const cachedUsername = cachedProfile && cachedProfile.username ? cachedProfile.username : fallbackUsername;
+          const cachedFullName = cachedProfile
+            ? [cachedProfile.first_name, cachedProfile.middle_name, cachedProfile.last_name].filter(Boolean).join(" ").trim()
+            : "";
 
-        try {
-          const profileSnap = await withTimeout(db.collection("profiles").doc(user.uid).get(), 7000);
+          // Fallback to cached/auth data if Firestore profile doesn't exist yet
           if (!profileSnap.exists) {
+            document.getElementById("welcome-name").textContent = cachedUsername;
+            document.getElementById("username").textContent = cachedUsername;
+            document.getElementById("email").textContent = (cachedProfile && cachedProfile.email) || email;
+            document.getElementById("full-name").textContent = cachedFullName || cachedUsername;
+            document.getElementById("mobile").textContent = (cachedProfile && cachedProfile.mobile) || "-";
+            document.getElementById("address").textContent = (cachedProfile && cachedProfile.address) || "-";
+            document.getElementById("member-since").textContent = formatDate(user.metadata && user.metadata.creationTime);
+            
             if (cachedProfile) {
-              hideStatus();
+              hideStatus(); // If we have a cached profile, no need to show status
             } else {
-              showStatus("Signed in successfully.", "ok");
+              showStatus("Signed in successfully. Profile data loading...", "ok"); // Indicate data is still being fetched
             }
-            return;
+            return; // Exit as there's no Firestore data yet
           }
 
           const p = profileSnap.data() || {};
@@ -431,19 +465,16 @@
           document.getElementById("member-since").textContent = formatDate(p.created_at || (user.metadata && user.metadata.creationTime));
 
           hideStatus();
-        } catch (err) {
-          if (cachedProfile) {
-            hideStatus();
-          } else {
-            showStatus("Signed in successfully.", "ok");
-          }
-        }
+        }, function (error) {
+          console.error("Error fetching real-time profile data:", error);
+          showStatus("Failed to load profile data: " + error.message, "warn");
+        });
       });
     });
 
     document.getElementById("logout-button").addEventListener("click", async function () {
       await auth.signOut();
-      window.location.href = "login.html";
+      window.location.replace("/signin");
     });
   </script>
 </body>
