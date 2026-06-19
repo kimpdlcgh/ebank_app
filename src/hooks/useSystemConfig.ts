@@ -213,15 +213,9 @@ export const useSystemConfig = () => {
     if (
       normalizedPath === '/sglogo.png' ||
       normalizedPath === 'sglogo.png' ||
-      normalizedPath.includes('safeguard')
-    ) {
-      return DEFAULT_LOGO_PATH;
-    }
-
-    if (
-      normalizedPath.startsWith('data:image/') ||
-      normalizedPath.startsWith('http://') ||
-      normalizedPath.startsWith('https://')
+      normalizedPath.includes('safeguard') ||
+      trimmedPath.includes('safeguard') ||
+      trimmedPath.includes('sglogo')
     ) {
       return DEFAULT_LOGO_PATH;
     }
