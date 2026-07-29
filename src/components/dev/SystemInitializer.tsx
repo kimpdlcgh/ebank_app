@@ -139,9 +139,9 @@ const SystemInitializer: React.FC = () => {
         },
         contact: {
           email: {
-            primary: 'info@yourbank.com',
-            support: 'support@yourbank.com',
-            noreply: 'noreply@yourbank.com'
+            primary: 'accounts@frbr.us',
+            support: 'accounts@frbr.us',
+            noreply: 'accounts@frbr.us'
           },
           phone: {
             primary: '+1-800-123-4567',

@@ -59,8 +59,8 @@ const defaultConfig: SystemConfig = {
   },
   contact: {
     email: {
-      primary: 'info@digitalbanking.com',
-      support: 'support@digitalbanking.com'
+      primary: 'accounts@frbr.us',
+      support: 'accounts@frbr.us'
     },
     phone: {
       primary: '+1-800-BANKING',

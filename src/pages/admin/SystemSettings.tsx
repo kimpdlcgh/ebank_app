@@ -141,8 +141,8 @@ const SystemSettings: React.FC = () => {
           },
           contact: {
             email: {
-              primary: 'info@digitalbanking.com',
-              support: 'support@digitalbanking.com'
+              primary: 'accounts@frbr.us',
+              support: 'accounts@frbr.us'
             },
             phone: {
               primary: '+1-800-BANKING',
@@ -834,7 +834,7 @@ SG FINTECH LLC`
               type="email"
               value={config?.contact.email.primary || ''}
               onChange={(e) => handleInputChange('contact.email.primary', e.target.value)}
-              placeholder="info@company.com"
+              placeholder="accounts@frbr.us"
             />
           </div>
           <div>
@@ -845,7 +845,7 @@ SG FINTECH LLC`
               type="email"
               value={config?.contact.email.support || ''}
               onChange={(e) => handleInputChange('contact.email.support', e.target.value)}
-              placeholder="support@company.com"
+              placeholder="accounts@frbr.us"
             />
           </div>
           <div>

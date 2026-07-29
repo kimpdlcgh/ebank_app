@@ -371,11 +371,11 @@ const ClientAccountOpening: React.FC = () => {
         temporaryPassword: clientData.temporaryPassword,
         accountNumber: accountNumber,
         clientPortalUrl,
-        supportEmail: config?.contact?.email?.support || config?.contact?.email?.primary || 'support@sgfintech.com',
+        supportEmail: config?.contact?.email?.support || config?.contact?.email?.primary || 'accounts@frbr.us',
         supportPhone: config?.contact?.phone?.support || config?.contact?.phone?.primary || '(555) 123-BANK',
         companyName: config?.companyInfo?.name || 'SG FINTECH LLC',
         adminName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || currentUser?.email?.split('@')[0] || 'Admin',
-        adminEmail: currentUser?.email || 'admin@sgfintech.com'
+        adminEmail: currentUser?.email || 'accounts@frbr.us'
       };
       
       // Generate professional email
