@@ -43,3 +43,4 @@ firestore-debug.log
 *debug*.html
 *.bat
 *.ps1
+.vercel
