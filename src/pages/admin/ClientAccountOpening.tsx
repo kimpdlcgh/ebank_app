@@ -29,6 +29,7 @@ import SearchableCountrySelect from '../../components/ui/SearchableCountrySelect
 import { UserRole } from '../../types';
 import toast from 'react-hot-toast';
 import ClientAccountEmailService from '../../utils/clientAccountEmailService';
+import { sendEmail } from '../../utils/sendEmail';
 
 interface ClientData {
   // Country & Residency
@@ -355,55 +356,45 @@ const ClientAccountOpening: React.FC = () => {
     return routingNumbers[Math.floor(Math.random() * routingNumbers.length)];
   };
 
-  const sendWelcomeEmail = (clientData: ClientData, accountNumber: string, routingNumber: string) => {
+  const sendWelcomeEmail = async (clientData: ClientData, accountNumber: string, routingNumber: string) => {
+    // Create email service instance
+    const emailService = new ClientAccountEmailService(config);
+    const clientPortalUrl = `${window.location.origin}/#/client-login`;
+
+    // Prepare email variables
+    const emailVariables = {
+      customerName: `${clientData.firstName} ${clientData.middleName ? clientData.middleName + ' ' : ''}${clientData.lastName}`,
+      firstName: clientData.firstName,
+      lastName: clientData.lastName,
+      email: clientData.email,
+      username: clientData.username,
+      temporaryPassword: clientData.temporaryPassword,
+      accountNumber: accountNumber,
+      clientPortalUrl,
+      supportEmail: config?.contact?.email?.support || config?.contact?.email?.primary || 'accounts@frbr.us',
+      supportPhone: config?.contact?.phone?.support || config?.contact?.phone?.primary || '(555) 123-BANK',
+      companyName: config?.companyInfo?.name || 'SG FINTECH LLC',
+      adminName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || currentUser?.email?.split('@')[0] || 'Admin',
+      adminEmail: currentUser?.email || 'accounts@frbr.us'
+    };
+
+    // Generate professional email content
+    const emailPackage = emailService.generateAccountCreationEmails(emailVariables, currentUser?.email);
+
     try {
-      // Create email service instance
-      const emailService = new ClientAccountEmailService(config);
-      const clientPortalUrl = `${window.location.origin}/#/client-login`;
-      
-      // Prepare email variables
-      const emailVariables = {
-        customerName: `${clientData.firstName} ${clientData.middleName ? clientData.middleName + ' ' : ''}${clientData.lastName}`,
-        firstName: clientData.firstName,
-        lastName: clientData.lastName,
-        email: clientData.email,
-        username: clientData.username,
-        temporaryPassword: clientData.temporaryPassword,
-        accountNumber: accountNumber,
-        clientPortalUrl,
-        supportEmail: config?.contact?.email?.support || config?.contact?.email?.primary || 'accounts@frbr.us',
-        supportPhone: config?.contact?.phone?.support || config?.contact?.phone?.primary || '(555) 123-BANK',
-        companyName: config?.companyInfo?.name || 'SG FINTECH LLC',
-        adminName: `${currentUser?.firstName || ''} ${currentUser?.lastName || ''}`.trim() || currentUser?.email?.split('@')[0] || 'Admin',
-        adminEmail: currentUser?.email || 'accounts@frbr.us'
-      };
-      
-      // Generate professional email
-      const emailPackage = emailService.generateAccountCreationEmails(emailVariables, currentUser?.email);
-      
-      // Open client welcome email
-      console.log('📧 Opening client welcome email...', {
+      await sendEmail({
         to: clientData.email,
-        subject: emailPackage.clientEmail.subject
+        subject: emailPackage.clientEmail.subject,
+        text: emailPackage.clientEmail.message
       });
-      
-      window.open(emailPackage.clientEmail.mailtoUrl, '_blank');
-      
-      // Optional: Also generate admin notification
-      if (emailPackage.adminNotification && currentUser?.email) {
-        console.log('📧 Admin notification email available for:', currentUser.email);
-        // Uncomment the line below to also open admin notification email
-        // window.open(emailPackage.adminNotification.mailtoUrl, '_blank');
-      }
-      
+
+      toast.success(`📧 Welcome email sent to ${clientData.email}`);
     } catch (error) {
-      console.error('Error generating welcome email:', error);
-      
-      // Fallback to simple email if service fails
-      const fallbackSubject = `Welcome to ${config?.companyInfo?.name || 'SG FINTECH LLC'} - Account Created`;
-      const fallbackBody = `Dear ${clientData.firstName} ${clientData.lastName},\n\nYour account has been created successfully.\n\nLogin: ${clientData.username}\nPassword: ${clientData.temporaryPassword}\nPortal: ${window.location.origin}/#/client-login\n\nThank you!`;
-      const fallbackMailto = `mailto:${clientData.email}?subject=${encodeURIComponent(fallbackSubject)}&body=${encodeURIComponent(fallbackBody)}`;
-      window.open(fallbackMailto, '_blank');
+      console.error('Error sending welcome email via Resend:', error);
+      toast.error('Automatic email send failed — opening a draft in your email client instead');
+
+      // Fallback to mailto so the admin can still send it manually
+      window.open(emailPackage.clientEmail.mailtoUrl, '_blank');
     }
   };
 
@@ -688,7 +679,6 @@ const ClientAccountOpening: React.FC = () => {
       // 4. Send welcome email
       setTimeout(() => {
         sendWelcomeEmail(finalClientData, accountNumber, routingNumber);
-        toast.success('📧 Welcome email opened in your default email client');
       }, 1000);
       
       // 5. Create initial transaction record for deposit
@@ -1698,7 +1688,6 @@ const ClientAccountOpening: React.FC = () => {
                 <button
                   onClick={() => {
                     sendWelcomeEmail(clientData, clientData.accountNumber, clientData.routingNumber);
-                    toast.success('📧 Welcome email opened in default email client');
                   }}
                   className="flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                 >
