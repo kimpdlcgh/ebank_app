@@ -7,6 +7,7 @@
 
   var MQ = "(max-width: 1024px)";
   var NAV_WIDGET = ".elementor-element-79f3d88";
+  var EBANK_LOGIN = "https://app.safeguardsecurities.us/login";
 
   function isMobileNav() {
     return window.matchMedia(MQ).matches;
@@ -120,6 +121,16 @@
 
       list.appendChild(item);
     });
+
+    var loginItem = document.createElement("li");
+    loginItem.className = "sg-mobile-drawer__item";
+    var loginA = document.createElement("a");
+    loginA.className = "sg-mobile-drawer__link sg-mobile-drawer__link--solo sg-mobile-drawer__link--external-login";
+    loginA.href = EBANK_LOGIN;
+    loginA.rel = "noopener noreferrer";
+    loginA.textContent = "Login";
+    loginItem.appendChild(loginA);
+    list.appendChild(loginItem);
 
     return list;
   }

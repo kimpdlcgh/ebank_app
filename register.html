@@ -354,7 +354,7 @@
       <div class="error-message" id="error-message" aria-live="polite"></div>
     </form>
     <div class="link">
-      Already have an account? <a href="login.html">Login here</a>
+      Already have an account? <a href="https://app.safeguardsecurities.us/login">Login here</a>
     </div>
   </div>
 
@@ -530,7 +530,7 @@
         });
 
         setMessage("Registration successful. Redirecting...", true);
-        setTimeout(function() { window.location.replace("/dashboard"); }, 1200);
+        setTimeout(function() { window.location.replace("https://app.safeguardsecurities.us/"); }, 1200);
 
       } catch (error) {
         setMessage(error.message || "Registration failed.", false);

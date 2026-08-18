@@ -1,0 +1,11 @@
+name = "safeguard-voice-ivr"
+main = "src/index.js"
+compatibility_date = "2024-06-01"
+
+# Set secrets before deploy (do not commit real values here):
+#   npx wrangler secret put TWILIO_AUTH_TOKEN
+#   npx wrangler secret put VOICE_RECEPTIONIST_PHONE
+
+[vars]
+VOICE_COMPANY_NAME = "Safeguard Securities"
+VOICE_AFTER_HOURS_ENABLED = "false"

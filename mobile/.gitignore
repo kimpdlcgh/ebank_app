@@ -1,0 +1,20 @@
+node_modules/
+_cap-tmp/
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+*.iml
+.DS_Store
+
+# Release signing secrets — never commit these
+android/keystore.properties
+*.jks
+*.keystore
+
+# iOS (generated on macOS)
+ios/App/Pods/
+ios/App/output/
+ios/App/App/public/
+ios/DerivedData/
+ios/capacitor-cordova-ios-plugins/

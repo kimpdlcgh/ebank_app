@@ -1,13 +1,15 @@
 (function () {
   window.FIREBASE_CONFIG = window.FIREBASE_CONFIG || {
-    apiKey: "AIzaSyCDebi6IG_BEUTOkaGDd4FgkkCSSTUwQ8g",
-    authDomain: "sginvest-dashboard.firebaseapp.com",
-    projectId: "sginvest-dashboard",
-    storageBucket: "sginvest-dashboard.firebasestorage.app",
-    messagingSenderId: "234600933348",
-    appId: "1:234600933348:web:94f478eba774a5fcd749f1",
-    measurementId: "G-JTEQB84QKN"
+    apiKey: "AIzaSyCbAQrQEyETkBw_1nMlDwEnkn4jqt1uPpo",
+    authDomain: "e-bank-dashboard.firebaseapp.com",
+    projectId: "e-bank-dashboard",
+    storageBucket: "e-bank-dashboard.firebasestorage.app",
+    messagingSenderId: "186587489295",
+    appId: "1:186587489295:web:c63b39b5216981bf89ef7a"
   };
+
+  // Same named database as the live React client app.
+  window.FIRESTORE_DATABASE_ID = "safeguardsecurities";
 
   if (!window.firebase) {
     console.error("Firebase SDK is not loaded.");
@@ -19,7 +21,16 @@
   }
 
   window.firebaseAuth = window.firebase.auth();
-  window.firebaseDb = window.firebase.firestore();
+
+  try {
+    window.firebaseDb = window.firebase.firestore(
+      window.firebase.app(),
+      window.FIRESTORE_DATABASE_ID
+    );
+  } catch (err) {
+    console.error("Firestore init failed:", err);
+    window.firebaseDb = window.firebase.firestore();
+  }
 
   try {
     if (typeof window.firebase.analytics === "function") {

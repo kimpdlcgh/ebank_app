@@ -76,6 +76,11 @@
       text-align: center;
     }
   </style>
+<link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon/favicon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+<meta name="msapplication-TileImage" content="/assets/favicon/favicon-192x192.png">
 </head>
 <body>
   <div class="register-container">
@@ -140,7 +145,7 @@
         return;
       }
 
-      window.location.href = "backend/ebank_app/dist/#/dashboard";
+      window.location.replace("/dashboard");
     });
   </script>
 </body>

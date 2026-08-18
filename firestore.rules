@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// Security rules for Safeguard Securities (Firebase project: e-bank-dashboard).
+//
+// Model (per the live app):
+//   profiles/{uid}            - one doc per user, keyed by auth uid
+//   wallets/{uid}             - one doc per user, keyed by auth uid
+//   watchlists/{uid}          - one doc per user, keyed by auth uid
+//   portfolioHoldings/{id}    - auto-id docs carrying a `userId` field
+//   systemSettings/{doc}      - platform-wide settings (admin managed)
+//   _test_/{doc}              - connectivity ping
+//
+// Admin/staff access is gated by an EMAIL allowlist below, because the app has
+// no custom claims and derives roles from email on the client (which is not a
+// security boundary). Note: rules never trust the `role` field in a profile.
+//
+// NOTE: balances/holdings are written by the client in this app, so an owner can
+// modify their own wallet/holdings. Truly tamper-proof balances require moving
+// those mutations server-side (Cloud Functions + Admin SDK); these rules lock
+// down cross-user access, which is the immediate launch blocker.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Staff/admin allowlist. Add every staff email that needs cross-user access.
+    // To add more later: append the email here and re-run
+    //   firebase deploy --only firestore:rules
+    function isStaff() {
+      return isSignedIn() && request.auth.token.email in [
+        'mateenforjob@gmail.com',
+        'admin@safeguardsecurities.us',
+        'support@safeguardsecurities.us',
+        'finance@safeguardsecurities.us',
+        'compliance@safeguardsecurities.us',
+        'onboarding@safeguardsecurities.us'
+      ];
+    }
+
+    // Per-user documents keyed by uid.
+    match /profiles/{uid} {
+      allow read, write: if isOwner(uid) || isStaff();
+    }
+
+    match /wallets/{uid} {
+      allow read, write: if isOwner(uid) || isStaff();
+    }
+
+    match /watchlists/{uid} {
+      allow read, write: if isOwner(uid) || isStaff();
+    }
+
+    // Client-initiated account closure / deletion requests (one doc per uid).
+    match /accountDeletionRequests/{uid} {
+      allow read, create, update: if isOwner(uid);
+      allow read, write, delete: if isStaff();
+    }
+
+    // Auto-id docs that reference their owner via a userId field.
+    match /portfolioHoldings/{id} {
+      allow read: if isStaff() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isStaff() ||
+        (isSignedIn() && request.resource.data.userId == request.auth.uid);
+      allow update, delete: if isStaff() ||
+        (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // Platform settings: readable by any signed-in user, writable by staff only.
+    match /systemSettings/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // Connectivity ping doc only (matches current behavior: requires sign-in).
+    match /_test_/{doc} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

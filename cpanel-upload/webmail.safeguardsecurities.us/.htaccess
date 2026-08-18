@@ -1,0 +1,4 @@
+RewriteEngine On
+# Port 443 on webmail.* sets session cookies for port 444 — browsers drop them → login loop.
+# Always send users to mail.:2096 where cookies match the URL.
+RewriteRule ^ https://mail.safeguardsecurities.us:2096/ [R=302,L]

@@ -1,6 +1,20 @@
-# Firebase Email Sender
+# Firebase Functions
 
-This function sends HTML email through your SMTP provider and is protected by a bearer token so it does not become an open relay.
+## Email sender (`sendMarketEmail`)
+
+Sends HTML email through your SMTP provider and is protected by a bearer token so it does not become an open relay.
+
+## Voice IVR (`voice`)
+
+Twilio webhook for receptionist greeting, keypad menu, and call routing. See **[VOICE-IVR.md](../VOICE-IVR.md)** for Twilio + Firebase setup.
+
+```powershell
+firebase deploy --only functions:voice --project e-bank-dashboard
+```
+
+---
+
+## Email setup
 
 ## 1. Install dependencies
 

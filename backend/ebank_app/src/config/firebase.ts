@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
@@ -23,13 +23,15 @@ const firebaseEnvConfig = {
 };
 
 const legacyDevFallbackConfig = {
-  apiKey: 'AIzaSyCDebi6IG_BEUTOkaGDd4FgkkCSSTUwQ8g',
-  authDomain: 'sginvest-dashboard.firebaseapp.com',
-  projectId: 'sginvest-dashboard',
-  storageBucket: 'sginvest-dashboard.firebasestorage.app',
-  messagingSenderId: '234600933348',
-  appId: '1:234600933348:web:94f478eba774a5fcd749f1',
+  apiKey: 'AIzaSyCbAQrQEyETkBw_1nMlDwEnkn4jqt1uPpo',
+  authDomain: 'e-bank-dashboard.firebaseapp.com',
+  projectId: 'e-bank-dashboard',
+  storageBucket: 'e-bank-dashboard.firebasestorage.app',
+  messagingSenderId: '186587489295',
+  appId: '1:186587489295:web:c63b39b5216981bf89ef7a',
 };
+
+const firestoreDatabaseId = import.meta.env.VITE_FIRESTORE_DATABASE_ID || 'safeguardsecurities';
 
 const missingFirebaseEnvKeys = requiredFirebaseEnvKeys.filter((key) => !import.meta.env[key]?.trim());
 
@@ -66,12 +68,12 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {}, firestoreDatabaseId);
 export const storage = getStorage(app);
 export const functions = getFunctions(app);
 
 // Configure Firestore settings for better offline handling
-import { enableNetwork, disableNetwork, connectFirestoreEmulator } from 'firebase/firestore';
+import { enableNetwork } from 'firebase/firestore';
 
 // Enable offline persistence and better error handling
 if (!import.meta.env.DEV) {

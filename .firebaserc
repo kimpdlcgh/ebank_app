@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "e-bank-dashboard"
-  }
+  },
+  "targets": {
+    "e-bank-dashboard": {
+      "hosting": {
+        "marketing": [
+          "safeguard-marketing"
+        ],
+        "app": [
+          "e-bank-dashboard"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

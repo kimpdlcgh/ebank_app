@@ -8,6 +8,7 @@ import { useSystemConfigContext } from '../../contexts/SystemConfigContext';
 import { createUserWithEmailAndPassword, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../config/firebase';
+import { USER_COLLECTION, legacyStatusToAccountStatus, newProfileDefaults, userWritePayload } from '../../utils/profileAdapter';
 import { UserRole } from '../../types';
 import { isAdminRole, normalizeUserRole } from '../../utils/roleUtils';
 import { useUsers } from '../../hooks/useFirestore';
@@ -200,7 +201,7 @@ const ManageUsers: React.FC = () => {
       }
 
       // Update user document to mark that they must change password
-      const userRef = doc(db, 'users', selectedUserForReset.id);
+      const userRef = doc(db, USER_COLLECTION, selectedUserForReset.uid || selectedUserForReset.id);
       await updateDoc(userRef, {
         mustChangePassword: true,
         passwordResetBy: currentUser?.email || 'admin',
@@ -391,7 +392,23 @@ const ManageUsers: React.FC = () => {
       };
 
       try {
-        await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+        await setDoc(doc(db, USER_COLLECTION, firebaseUser.uid), {
+          ...newProfileDefaults(newUserData.email, newUserData.role === UserRole.SUPER_ADMIN ? UserRole.SUPER_ADMIN : UserRole.ADMIN),
+          first_name: newUserData.firstName || '',
+          last_name: newUserData.lastName || '',
+          firstName: newUserData.firstName || '',
+          lastName: newUserData.lastName || '',
+          phone: newUserData.phone || '',
+          twoFactorEnabled: newUserData.requireTwoFactor,
+          department: newUserData.department || '',
+          jobTitle: newUserData.jobTitle || '',
+          createdBy: currentUser?.uid || 'admin',
+          adminProfile: {
+            department: newUserData.department || '',
+            jobTitle: newUserData.jobTitle || '',
+            permissions: newUserData.permissions || defaultPermissions
+          }
+        });
         console.log('✅ User document created in Firestore');
       } catch (firestoreError) {
         console.warn('⚠️ Firestore write failed, but Firebase Auth user exists:', firestoreError);
@@ -400,7 +417,7 @@ const ManageUsers: React.FC = () => {
       // 3. Generate email with admin credentials
       const adminEmail = getContactEmail();
       const supportEmail = config.contact.email.support || adminEmail;
-      const adminPortalUrl = `${window.location.origin}/#/admin-access`;
+      const adminPortalUrl = `${window.location.origin}/admin-access`;
       
       const emailSubject = encodeURIComponent(`Admin Account Created - ${newUserData.firstName} ${newUserData.lastName}`);
       const emailBody = encodeURIComponent(`
@@ -660,7 +677,8 @@ ${config.companyInfo.name} Administration Team
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.map((user) => {
-                  const StatusIcon = getStatusIcon(user.status);
+                  const userStatus = user.status || 'pending';
+                  const StatusIcon = getStatusIcon(userStatus);
                   return (
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -688,13 +706,13 @@ ${config.companyInfo.name} Administration Team
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(user.status)}`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(userStatus)}`}>
                           <StatusIcon className="w-3 h-3 mr-1" />
-                          {user.status}
+                          {userStatus}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.lastLogin ? new Date(user.lastLogin.toDate()).toLocaleDateString() : 'Never'}
+                        {user.lastLoginAt ? user.lastLoginAt.toDate().toLocaleDateString() : 'Never'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end space-x-2">

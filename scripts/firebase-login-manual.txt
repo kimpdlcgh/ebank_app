@@ -1,0 +1,21 @@
+Run these ONE AT A TIME in Command Prompt (cmd.exe), not PowerShell.
+Wait for each step to finish before the next.
+
+cd /d D:\safeguardsecurities
+
+set NODE_OPTIONS=--use-system-ca
+set NODE_TLS_REJECT_UNAUTHORIZED=0
+
+firebase logout
+
+firebase login --no-localhost
+
+REM A URL must print. Open it in Chrome, sign in, copy the LONG code.
+REM When prompted "Enter authorization code:", paste the full code and press Enter.
+
+set NODE_TLS_REJECT_UNAUTHORIZED=
+
+firebase login:list
+
+REM If you see your email, deploy:
+firebase deploy --only hosting:marketing --project e-bank-dashboard

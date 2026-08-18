@@ -2,6 +2,9 @@ const { onRequest } = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const { defineSecret } = require("firebase-functions/params");
 const nodemailer = require("nodemailer");
+const { TWILIO_AUTH_TOKEN } = require("./voice/config");
+const { validateTwilioRequest } = require("./voice/validate");
+const { handleVoice } = require("./voice/handlers");
 
 const EMAIL_API_KEY = defineSecret("EMAIL_API_KEY");
 const SMTP_HOST = defineSecret("SMTP_HOST");
@@ -167,6 +170,45 @@ exports.sendMarketEmail = onRequest(
         error: "Email send failed.",
         details: error.message,
       });
+    }
+  }
+);
+
+/**
+ * Twilio Voice IVR — receptionist greeting, menu routing, optional after-hours voicemail.
+ * Configure your Twilio number "A call comes in" webhook to this function URL (POST).
+ */
+exports.voice = onRequest(
+  {
+    region: "us-central1",
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    invoker: "public",
+  },
+  async (req, res) => {
+    if (req.method !== "POST" && req.method !== "GET") {
+      res.set("Allow", "GET, POST");
+      res.status(405).send("Method Not Allowed");
+      return;
+    }
+
+    const authToken = TWILIO_AUTH_TOKEN.value();
+    if (!validateTwilioRequest(req, authToken)) {
+      logger.warn("Twilio signature validation failed", { path: req.path });
+      res.status(403).send("Forbidden");
+      return;
+    }
+
+    try {
+      const xml = handleVoice(req);
+      res.set("Content-Type", "text/xml; charset=utf-8");
+      res.status(200).send(xml);
+    } catch (error) {
+      logger.error("Voice handler failed", error);
+      res.set("Content-Type", "text/xml; charset=utf-8");
+      res.status(200).send(
+        '<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="Polly.Joanna">We are experiencing technical difficulties. Please try again later.</Say><Hangup/></Response>'
+      );
     }
   }
 );

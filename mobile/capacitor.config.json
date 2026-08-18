@@ -1,0 +1,15 @@
+{
+  "appId": "us.safeguardsecurities.app",
+  "appName": "Safeguard Securities",
+  "webDir": "www",
+  "server": {
+    "url": "https://safeguardsecurities.us",
+    "cleartext": false,
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "errorPath": "error.html"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

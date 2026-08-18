@@ -307,7 +307,6 @@
           <button class="action-btn" type="button" onclick="window.location.href='portfolio-management/index.html'">Open Portfolio Management</button>
           <button class="action-btn" type="button" onclick="window.location.href='etfs/index.html'">Explore ETFs</button>
           <button class="action-btn" type="button" onclick="window.location.href='contact/index.html'">Contact Advisor</button>
-          <button class="action-btn" type="button" onclick="window.location.href='https://app.safeguardsecurities.us/#/client-login'">Open FRBR Client Portal</button>
           <button class="action-btn" style="border-color: var(--brand); background: #eef3ff;" type="button" onclick="window.location.href='admin.html'">Local Admin Dashboard</button>
           <button class="action-btn danger" type="button" onclick="window.location.href='delete-account/'">Delete or close account</button>
         </div>
@@ -398,7 +397,7 @@
     }
 
     function redirectToLogin() {
-      window.location.replace("/signin");
+      window.location.replace("https://app.safeguardsecurities.us/login");
     }
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -474,7 +473,7 @@
 
     document.getElementById("logout-button").addEventListener("click", async function () {
       await auth.signOut();
-      window.location.replace("/signin");
+      window.location.replace("https://app.safeguardsecurities.us/login");
     });
   </script>
 </body>

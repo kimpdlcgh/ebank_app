@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Delete Account - Safeguard Securities</title>
+  <meta name="description" content="Request or complete deletion of your Safeguard Securities client account and associated app data." />
+  <link rel="stylesheet" href="../wp-content/themes/hello-elementor/style.min-ver=2.5.0.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script src="../firebase-init.js"></script>
+  <style>
+    :root {
+      --ink: #162746;
+      --ink-soft: #5e6b85;
+      --brand: #214c87;
+      --brand-strong: #163a6a;
+      --card: #ffffff;
+      --line: #d8e1f0;
+      --danger: #b3261e;
+      --danger-bg: #fdecea;
+      --ok-bg: #e7f7ed;
+      --ok-text: #166534;
+      --warn-bg: #fff5e8;
+      --warn-text: #9a3412;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Poppins", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 8%, #eef3ff 0%, #eef3ff 18%, transparent 20%),
+        radial-gradient(circle at 85% 88%, #dce9ff 0%, #dce9ff 16%, transparent 18%),
+        linear-gradient(155deg, #f8fbff 0%, #eff4ff 48%, #f5f8ff 100%);
+      padding: 26px 16px;
+    }
+
+    .page-shell {
+      max-width: 720px;
+      margin: 0 auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .topbar {
+      background: linear-gradient(135deg, #10396b 0%, #214c87 60%, #2f5da0 100%);
+      border-radius: 16px;
+      padding: 18px;
+      color: #fff;
+      box-shadow: 0 12px 26px rgba(16, 57, 107, 0.24);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-wrap img {
+      width: 120px;
+      max-width: 100%;
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .topbar p {
+      margin: 4px 0 0;
+      font-size: 0.88rem;
+      opacity: 0.9;
+    }
+
+    .nav-btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      background: #fff;
+      color: var(--brand-strong);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .nav-btn:hover { background: #edf3ff; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid #e4ebf7;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 22px rgba(15, 33, 71, 0.08);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      color: var(--brand-strong);
+    }
+
+    .card p, .card li {
+      margin: 0 0 10px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+
+    .card ul {
+      margin: 0 0 12px;
+      padding-left: 1.2rem;
+    }
+
+    .status-banner {
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.86rem;
+      line-height: 1.45;
+      border: 1px solid transparent;
+      display: none;
+    }
+
+    .status-banner.ok {
+      display: block;
+      background: var(--ok-bg);
+      border-color: #b9e8c8;
+      color: var(--ok-text);
+    }
+
+    .status-banner.warn {
+      display: block;
+      background: var(--warn-bg);
+      border-color: #ffd7ae;
+      color: var(--warn-text);
+    }
+
+    .status-banner.error {
+      display: block;
+      background: var(--danger-bg);
+      border-color: #f5c2c0;
+      color: var(--danger);
+    }
+
+    .signed-out-panel {
+      display: block;
+    }
+
+    .signed-in-panel {
+      display: none;
+    }
+
+    body.is-signed-in .signed-out-panel {
+      display: none;
+    }
+
+    body.is-signed-in .signed-in-panel {
+      display: block;
+    }
+
+    body.marketing-site .signed-in-panel {
+      display: none;
+    }
+
+    body.marketing-site .signed-out-panel {
+      display: block;
+    }
+
+    .portal-cta {
+      display: inline-block;
+      margin-top: 8px;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .user-chip {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      background: #f4f8ff;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+    }
+
+    .user-chip strong { color: var(--ink); }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ink-soft);
+    }
+
+    .field input[type="password"],
+    .field input[type="text"] {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+    }
+
+    .check-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .check-row input { margin-top: 3px; }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--brand);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: var(--brand-strong); }
+
+    .btn-primary:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .btn-danger:hover { background: #8f1f18; }
+
+    .btn-danger:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .divider {
+      border: 0;
+      border-top: 1px solid #e8edf6;
+      margin: 18px 0;
+    }
+
+    .danger-zone {
+      border: 1px solid #f5c2c0;
+      background: #fffafa;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .danger-zone h3 {
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+      color: var(--danger);
+    }
+
+    .mini-note {
+      font-size: 0.83rem;
+      color: var(--ink-soft);
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 8px;
+    }
+
+    .data-table th,
+    .data-table td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid #eff3fb;
+      vertical-align: top;
+    }
+
+    .data-table th {
+      color: var(--ink-soft);
+      font-weight: 600;
+      width: 42%;
+    }
+  </style>
+  <link rel="icon" href="/assets/favicon/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon/favicon-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon/apple-touch-icon.png">
+  <meta name="msapplication-TileImage" content="/assets/favicon/favicon-192x192.png">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <img src="../wp-content/uploads/sites/12/2022/02/logo2.png" alt="Safeguard Securities" />
+        <div>
+          <h1>Delete your account</h1>
+          <p>Safeguard Securities, Inc.</p>
+        </div>
+      </div>
+      <a class="nav-btn" id="back-link" href="../dashboard.html">Back to dashboard</a>
+    </header>
+
+    <div id="status-banner" class="status-banner"></div>
+
+    <article class="card">
+      <h2>About account deletion</h2>
+      <p>
+        This page explains how users of the <strong>Safeguard Securities</strong> mobile app and client portal
+        can request closure of their account or delete their sign-in profile and associated app data.
+      </p>
+
+      <table class="data-table" aria-label="Data deleted and retained">
+        <thead>
+          <tr>
+            <th scope="col">Category</th>
+            <th scope="col">What happens</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Deleted with your request</th>
+            <td>
+              Firebase Authentication sign-in, client profile (name, email, phone, address),
+              app wallet/watchlist records, and portfolio holdings stored for your user ID in our app database.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">May be retained</th>
+            <td>
+              Brokerage records, tax forms, trade confirmations, AML/KYC files, and communications required by
+              SEC Rule 17a-4 and FINRA (typically at least six years after account closure). These are not stored
+              solely in the mobile app database.
+            </td>
+          </tr>
+          <tr>
+            <th scope="row">Processing time</th>
+            <td>
+              Immediate deletion removes app sign-in and app-stored data right away. A closure request is reviewed
+              by our team within 30 days. Email <strong>privacy@safeguardsecurities.us</strong> for status updates.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="card signed-out-panel" id="signed-out-panel">
+      <h2 id="signin-heading">Sign in to manage your account</h2>
+      <p id="signin-copy">
+        To submit a deletion request or delete your app account, sign in with the same email and password you use in the app.
+      </p>
+      <a class="btn btn-primary portal-cta" id="signin-cta" href="https://app.safeguardsecurities.us/login">Sign in to delete account</a>
+      <p class="mini-note">
+        You can also email
+        <a href="mailto:privacy@safeguardsecurities.us">privacy@safeguardsecurities.us</a> from your registered email
+        with the subject line &ldquo;Account deletion request&rdquo;.
+      </p>
+    </article>
+
+    <article class="card signed-in-panel" id="signed-in-panel">
+      <div class="user-chip" id="user-chip">Signed in</div>
+
+      <h2>Request account closure</h2>
+      <p>
+        Use this if you want our team to close your brokerage relationship and remove app access. Your sign-in
+        remains active until we complete the review.
+      </p>
+      <form id="request-form">
+        <div class="check-row">
+          <input type="checkbox" id="request-confirm" required />
+          <label for="request-confirm">
+            I understand that regulatory records may be retained as described above and that open positions or
+            balances must be resolved before full account closure.
+          </label>
+        </div>
+        <div class="field">
+          <label for="request-password">Confirm your password</label>
+          <input type="password" id="request-password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn btn-primary" id="request-btn">Submit deletion request</button>
+      </form>
+
+      <hr class="divider" />
+
+      <div class="danger-zone">
+        <h3>Delete app account immediately</h3>
+        <p>
+          This permanently deletes your Firebase sign-in and app data (profile, wallet, watchlist, and holdings).
+          You will not be able to sign in again with the same credentials unless you register a new account.
+        </p>
+        <form id="delete-form">
+          <div class="check-row">
+            <input type="checkbox" id="delete-confirm" required />
+            <label for="delete-confirm">
+              I want to permanently delete my Safeguard Securities app account and associated app data now.
+            </label>
+          </div>
+          <div class="field">
+            <label for="delete-password">Confirm your password</label>
+            <input type="password" id="delete-password" autocomplete="current-password" required />
+          </div>
+          <button type="submit" class="btn btn-danger" id="delete-btn">Delete my account now</button>
+        </form>
+      </div>
+    </article>
+
+    <article class="card">
+      <h2>Need help?</h2>
+      <p class="mini-note" style="margin:0;">
+        Contact <a href="mailto:privacy@safeguardsecurities.us">privacy@safeguardsecurities.us</a> or
+        <a href="../contact/index.html">our support team</a>.
+        See also our <a href="../privacy-policy/index.html">Privacy Policy</a>.
+      </p>
+    </article>
+  </div>
+
+  <script>
+    const auth = window.firebaseAuth;
+    const db = window.firebaseDb;
+
+    const APP_ORIGIN = "https://app.safeguardsecurities.us";
+    const MARKETING_ORIGIN = "https://safeguardsecurities.us";
+    const RETURN_PATH = "delete-account/";
+    const LOCAL_KEYS = [
+      "sgsLocalUserMap",
+      "sgsCurrentProfile",
+      "sgsLocalProfiles",
+      "sgsLastRegisteredEmail",
+      "sgsLastLoginEmail",
+      "sgsRememberedUsername"
+    ];
+
+    function withTimeout(promise, ms) {
+      return Promise.race([
+        promise,
+        new Promise(function (_, reject) {
+          setTimeout(function () { reject(new Error("timeout")); }, ms);
+        })
+      ]);
+    }
+
+    function showStatus(message, type) {
+      const banner = document.getElementById("status-banner");
+      banner.textContent = message;
+      banner.className = "status-banner " + (type || "warn");
+      banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function hideStatus() {
+      const banner = document.getElementById("status-banner");
+      banner.textContent = "";
+      banner.className = "status-banner";
+    }
+
+    function clearLocalClientData(email) {
+      LOCAL_KEYS.forEach(function (key) {
+        try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+      });
+      if (!email) return;
+      try {
+        const mapRaw = localStorage.getItem("sgsLocalUserMap");
+        if (!mapRaw) return;
+        const map = JSON.parse(mapRaw);
+        Object.keys(map).forEach(function (k) {
+          if (String(map[k]).toLowerCase() === String(email).toLowerCase()) {
+            delete map[k];
+          }
+        });
+        localStorage.setItem("sgsLocalUserMap", JSON.stringify(map));
+      } catch (e) { /* ignore */ }
+    }
+
+    async function reauthenticate(user, password) {
+      const credential = firebase.auth.EmailAuthProvider.credential(user.email, password);
+      await user.reauthenticateWithCredential(credential);
+    }
+
+    async function deleteCollectionDoc(path, uid) {
+      try {
+        await db.collection(path).doc(uid).delete();
+      } catch (err) {
+        console.warn("Could not delete " + path + "/" + uid, err);
+      }
+    }
+
+    async function deletePortfolioHoldings(uid) {
+      try {
+        const snap = await withTimeout(
+          db.collection("portfolioHoldings").where("userId", "==", uid).get(),
+          12000
+        );
+        if (snap.empty) return;
+        const batch = db.batch();
+        snap.docs.forEach(function (doc) { batch.delete(doc.ref); });
+        await withTimeout(batch.commit(), 12000);
+      } catch (err) {
+        console.warn("Portfolio holdings delete skipped:", err);
+      }
+    }
+
+    async function deleteAppUserData(uid) {
+      await Promise.all([
+        deleteCollectionDoc("profiles", uid),
+        deleteCollectionDoc("wallets", uid),
+        deleteCollectionDoc("watchlists", uid),
+        deletePortfolioHoldings(uid)
+      ]);
+    }
+
+    function setSignedInUI(user) {
+      document.body.classList.add("is-signed-in");
+      const chip = document.getElementById("user-chip");
+      chip.innerHTML = "Signed in as <strong>" + (user.email || "your account") + "</strong>";
+    }
+
+    function isMarketingSite() {
+      return /safeguardsecurities\.us$/i.test(window.location.hostname) &&
+        !/^app\./i.test(window.location.hostname);
+    }
+
+    function appDeleteAccountUrl() {
+      return APP_ORIGIN + "/" + RETURN_PATH;
+    }
+
+    function loginRedirectUrl() {
+      const returnTo = new URL(RETURN_PATH, APP_ORIGIN + "/").href;
+      return APP_ORIGIN + "/login?next=" + encodeURIComponent(returnTo);
+    }
+
+    function dashboardUrl() {
+      return APP_ORIGIN + "/";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const backLink = document.getElementById("back-link");
+      const signInCta = document.getElementById("signin-cta");
+      const signInHeading = document.getElementById("signin-heading");
+      const signInCopy = document.getElementById("signin-copy");
+
+      if (isMarketingSite()) {
+        document.body.classList.add("marketing-site");
+        backLink.href = "../index.html";
+        backLink.textContent = "Back to home";
+        signInCta.href = loginRedirectUrl();
+        signInCta.textContent = "Open client portal to delete account";
+        signInHeading.textContent = "Delete account in the client portal";
+        signInCopy.textContent =
+          "Account deletion is completed in our secure client portal (same sign-in as the mobile app). " +
+          "Use the button below to sign in and submit your request.";
+        return;
+      }
+
+      backLink.href = "../dashboard.html";
+      signInCta.href = loginRedirectUrl();
+
+      auth.onAuthStateChanged(function (user) {
+        if (!user) {
+          document.body.classList.remove("is-signed-in");
+          return;
+        }
+        setSignedInUI(user);
+        hideStatus();
+      });
+
+      document.getElementById("request-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const user = auth.currentUser;
+        if (!user) {
+          window.location.href = loginRedirectUrl();
+          return;
+        }
+
+        const password = document.getElementById("request-password").value;
+        const btn = document.getElementById("request-btn");
+        btn.disabled = true;
+        hideStatus();
+
+        try {
+          await reauthenticate(user, password);
+          await withTimeout(
+            db.collection("accountDeletionRequests").doc(user.uid).set({
+              uid: user.uid,
+              email: user.email || "",
+              status: "pending",
+              type: "closure_request",
+              requestedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              source: "delete-account-page"
+            }, { merge: true }),
+            12000
+          );
+          showStatus(
+            "Your account deletion request was submitted. Our team will contact you at " +
+            (user.email || "your registered email") + " within 30 days.",
+            "ok"
+          );
+          document.getElementById("request-form").reset();
+        } catch (err) {
+          const msg = err && err.code === "auth/wrong-password"
+            ? "Incorrect password. Please try again."
+            : (err.message || "Could not submit your request. Try again or email privacy@safeguardsecurities.us.");
+          showStatus(msg, "error");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      document.getElementById("delete-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const user = auth.currentUser;
+        if (!user) {
+          window.location.href = loginRedirectUrl();
+          return;
+        }
+
+        if (!window.confirm(
+          "This permanently deletes your app sign-in and app-stored data. Regulatory brokerage records may still be retained. Continue?"
+        )) {
+          return;
+        }
+
+        const password = document.getElementById("delete-password").value;
+        const btn = document.getElementById("delete-btn");
+        btn.disabled = true;
+        hideStatus();
+
+        try {
+          await reauthenticate(user, password);
+          const email = user.email;
+          const uid = user.uid;
+
+          await deleteAppUserData(uid);
+
+          try {
+            await db.collection("accountDeletionRequests").doc(uid).set({
+              uid: uid,
+              email: email || "",
+              status: "completed",
+              type: "immediate_delete",
+              completedAt: firebase.firestore.FieldValue.serverTimestamp(),
+              source: "delete-account-page"
+            }, { merge: true });
+          } catch (logErr) {
+            console.warn("Deletion log write skipped:", logErr);
+          }
+
+          clearLocalClientData(email);
+          await user.delete();
+
+          showStatus("Your account was deleted. Redirecting…", "ok");
+          setTimeout(function () {
+            window.location.href = "../index.html";
+          }, 2200);
+        } catch (err) {
+          let msg = err.message || "Deletion failed.";
+          if (err && err.code === "auth/wrong-password") {
+            msg = "Incorrect password. Please try again.";
+          } else if (err && err.code === "auth/requires-recent-login") {
+            msg = "Please sign out, sign in again, and retry deletion.";
+          }
+          showStatus(msg, "error");
+          btn.disabled = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

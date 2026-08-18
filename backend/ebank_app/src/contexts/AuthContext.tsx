@@ -13,6 +13,13 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import { User, UserRole, AuthContextType, SignupForm } from '../types';
 import { normalizeUserRole } from '../utils/roleUtils';
+import {
+  USER_COLLECTION,
+  newProfileDefaults,
+  profileToUser,
+  inferRoleFromEmail,
+  userWritePayload,
+} from '../utils/profileAdapter';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,37 +46,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const hydrateAuthenticatedUser = async (firebaseUser: FirebaseAuthUser): Promise<User> => {
-    console.log('Fetching user document for UID:', firebaseUser.uid);
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+    console.log('Fetching user profile for UID:', firebaseUser.uid);
+    const userDoc = await getDoc(doc(db, USER_COLLECTION, firebaseUser.uid));
 
     if (userDoc.exists()) {
-      const userData = userDoc.data() as User;
-      console.log('User document found:', userData);
-      console.log('🆔 USER ID for Admin Creation:', firebaseUser.uid);
-      return {
-        ...userData,
-        uid: firebaseUser.uid,
-        emailVerified: firebaseUser.emailVerified,
-        role: resolveStoredUserRole(userData as Partial<User> & { adminProfile?: unknown }),
-      };
+      const userData = userDoc.data();
+      console.log('Profile found:', userData);
+      return profileToUser(firebaseUser.uid, userData, firebaseUser.emailVerified);
     }
 
-    console.log('User document not found, creating new one');
-    const newUser: User = {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email || '',
-      firstName: firebaseUser.displayName?.split(' ')[0] || '',
-      lastName: firebaseUser.displayName?.split(' ')[1] || '',
-      role: UserRole.CLIENT,
-      emailVerified: firebaseUser.emailVerified,
-      twoFactorEnabled: false,
-      createdAt: new Date() as any,
-      updatedAt: new Date() as any,
-      isActive: true,
-    };
+    console.log('Profile not found, creating defaults');
+    const role = inferRoleFromEmail(firebaseUser.email || undefined);
+    const defaults = newProfileDefaults(firebaseUser.email || '', role);
+    defaults.first_name = firebaseUser.displayName?.split(' ')[0] || '';
+    defaults.last_name = firebaseUser.displayName?.split(' ')[1] || '';
 
-    await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
-    return newUser;
+    await setDoc(doc(db, USER_COLLECTION, firebaseUser.uid), defaults);
+    return profileToUser(firebaseUser.uid, defaults, firebaseUser.emailVerified);
   };
 
   useEffect(() => {
@@ -202,7 +195,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isActive: true,
       };
 
-      await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+      await setDoc(doc(db, USER_COLLECTION, firebaseUser.uid), {
+        ...newProfileDefaults(email, UserRole.CLIENT),
+        first_name: firstName,
+        last_name: lastName,
+        firstName,
+        lastName,
+        phone: phoneNumber,
+      });
       
       // Send email verification
       await firebaseSendEmailVerification(firebaseUser);

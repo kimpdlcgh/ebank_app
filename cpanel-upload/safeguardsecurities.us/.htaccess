@@ -1,0 +1,6 @@
+# Upload to cPanel File Manager → folder safeguardsecurities.us (addon domain root).
+# Stops /login from showing cPanel Webmail; sends staff to Firebase client portal.
+
+RewriteEngine On
+RewriteRule ^login/?$ https://safeguardsecurities.us/signin [R=302,L]
+RewriteRule ^signin/?$ https://safeguardsecurities.us/signin [R=302,L]

@@ -6,14 +6,20 @@
   overflow-x: clip;
   --sg-navy: #09163c;
   --sg-navy-mid: #0c2d5c;
+  --sg-navy-soft: #1a4a7a;
+  --sg-gold: #b8860b;
   --sg-text: #3d4a5c;
-  --sg-muted: #6b7a8f;
+  --sg-muted: #5c6b7f;
   --sg-border: rgba(9, 22, 60, 0.1);
-  --sg-radius: 6px;
+  --sg-radius: 8px;
+  --sg-tier-executive: #09163c;
+  --sg-tier-csuite: #0c2d5c;
+  --sg-tier-senior: #1a4a7a;
+  --sg-tier-management: #3d5a80;
 }
 
 /* --------------------------------------------------------------------------
-   Executive intro — copy left, our-team.png right (no photo background band)
+   Executive intro — copy left, our-team.png right
    -------------------------------------------------------------------------- */
 .elementor-1623 .sg-team-intro-section {
   padding: 2.75rem 0 2.5rem !important;
@@ -134,24 +140,308 @@
   font-weight: 500;
 }
 
-/* CEO — centered on its own row, same width as one grid card */
+/* --------------------------------------------------------------------------
+   Leadership org — tiered levels
+   -------------------------------------------------------------------------- */
+.elementor-1623 .sg-team-leadership-grid {
+  background-color: #ffffff;
+  border-top: 1px solid var(--sg-border);
+  padding-top: 2.75rem;
+  padding-bottom: 3.5rem;
+}
+
+.elementor-1623 .sg-team-leadership-grid > .elementor-container {
+  display: block !important;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.elementor-1623 .sg-team-org-header {
+  margin-bottom: 2.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sg-border);
+}
+
+.elementor-1623 .sg-team-org-header__eyebrow {
+  display: block;
+  margin: 0 0 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sg-muted);
+}
+
+.elementor-1623 .sg-team-org-header__title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 700;
+  color: var(--sg-navy);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.elementor-1623 .sg-team-org-header__desc {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--sg-text);
+}
+
+.elementor-1623 .sg-team-org {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.elementor-1623 .sg-team-level {
+  position: relative;
+}
+
+.elementor-1623 .sg-team-level + .sg-team-level::before {
+  content: "";
+  position: absolute;
+  top: -1.35rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 1.35rem;
+  background: linear-gradient(180deg, rgba(9, 22, 60, 0.15) 0%, rgba(9, 22, 60, 0.05) 100%);
+}
+
+.elementor-1623 .sg-team-level__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.15rem;
+}
+
+.elementor-1623 .sg-team-level__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: var(--sg-tier-accent, var(--sg-navy));
+  border-radius: 4px;
+  line-height: 1.3;
+}
+
+.elementor-1623 .sg-team-level--executive {
+  --sg-tier-accent: var(--sg-tier-executive);
+}
+
+.elementor-1623 .sg-team-level--csuite {
+  --sg-tier-accent: var(--sg-tier-csuite);
+}
+
+.elementor-1623 .sg-team-level--senior {
+  --sg-tier-accent: var(--sg-tier-senior);
+}
+
+.elementor-1623 .sg-team-level--management {
+  --sg-tier-accent: var(--sg-tier-management);
+}
+
+.elementor-1623 .sg-team-level--executive .ha-infobox-body {
+  --sg-tier-accent: var(--sg-tier-executive);
+}
+
+.elementor-1623 .sg-team-level--csuite .ha-infobox-body {
+  --sg-tier-accent: var(--sg-tier-csuite);
+}
+
+.elementor-1623 .sg-team-level--senior .ha-infobox-body {
+  --sg-tier-accent: var(--sg-tier-senior);
+}
+
+.elementor-1623 .sg-team-level--management .ha-infobox-body {
+  --sg-tier-accent: var(--sg-tier-management);
+}
+
+.elementor-1623 .sg-team-level__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--sg-navy);
+  letter-spacing: -0.01em;
+}
+
+.elementor-1623 .sg-team-level__desc {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--sg-muted);
+}
+
+.elementor-1623 .sg-team-level__grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.15rem;
+}
+
+.elementor-1623 .sg-team-level--executive .sg-team-level__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .elementor-1623 .sg-team-ceo-col {
   grid-column: 1 / -1;
   display: flex !important;
   justify-content: center;
-  margin: 0 0 0.5rem !important;
+  margin: 0 !important;
   width: 100% !important;
   max-width: none !important;
 }
 
 .elementor-1623 .sg-team-ceo-col > .elementor-widget-wrap {
   width: 100%;
-  max-width: calc((100% - 3 * 1.25rem) / 4);
+  max-width: min(320px, 100%);
   margin: 0 auto;
 }
 
-.elementor-1623 .sg-ceo-card {
+.elementor-1623 .sg-team-level__grid > .elementor-column {
   width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.elementor-1623 .sg-team-level__grid .elementor-column > .elementor-widget-wrap {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-media-dir-left .elementor-widget-container,
+.elementor-1623 .sg-team-level__grid .ha-infobox .elementor-widget-container {
+  display: block !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: 0 !important;
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-figure,
+.elementor-1623 .sg-team-level__grid .ha-infobox-figure--image,
+.elementor-1623 .sg-team-level__grid .ha-infobox-figure img {
+  display: none !important;
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox {
+  height: 100%;
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-body,
+.elementor-1623 .sg-ceo-card .ha-infobox-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto auto;
+  align-items: start;
+  column-gap: 0.9rem;
+  row-gap: 0.35rem;
+  width: 100%;
+  min-height: 118px;
+  height: 100%;
+  padding: 1.1rem 1.15rem 1rem;
+  background: #fafbfc;
+  border: 1px solid var(--sg-border);
+  border-top: 3px solid var(--sg-tier-accent, var(--sg-navy));
+  border-radius: var(--sg-radius);
+  box-shadow: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-body:hover,
+.elementor-1623 .sg-ceo-card .ha-infobox-body:hover {
+  transform: translateY(-2px);
+  background: #ffffff;
+  border-color: rgba(9, 22, 60, 0.2);
+  box-shadow: 0 8px 24px rgba(9, 22, 60, 0.09);
+}
+
+.elementor-1623 .sg-team-avatar {
+  grid-row: 1 / -1;
+  grid-column: 1;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--sg-navy-mid) 0%, var(--sg-navy) 100%);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(9, 22, 60, 0.18);
+}
+
+.elementor-1623 .sg-team-level--executive .sg-team-avatar,
+.elementor-1623 .sg-ceo-card .sg-team-avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 0.9375rem;
+  background: linear-gradient(145deg, var(--sg-gold) 0%, #8b6914 100%);
+  box-shadow: 0 3px 12px rgba(184, 134, 11, 0.35);
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-title,
+.elementor-1623 .sg-ceo-card .ha-infobox-title {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+  font-size: 0.9375rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--sg-navy) !important;
+}
+
+.elementor-1623 .sg-ceo-card .ha-infobox-title {
+  font-size: 1.0625rem !important;
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-text,
+.elementor-1623 .sg-ceo-card .ha-infobox-text {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0 0;
+  border-top: 1px solid var(--sg-border);
+}
+
+.elementor-1623 .sg-team-level__grid .ha-infobox-text p,
+.elementor-1623 .sg-ceo-card .ha-infobox-text p {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--sg-muted);
+}
+
+.elementor-1623 .sg-team-card__tier-label {
+  grid-column: 2;
+  grid-row: 3;
+  margin: 0.15rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--sg-tier-accent, var(--sg-navy-soft));
 }
 
 .elementor-1623 .sg-ceo-card > .elementor-widget-container {
@@ -160,198 +450,15 @@
   --e-transform-scale: 1 !important;
 }
 
-.elementor-1623 .sg-ceo-card .ha-infobox-body {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.85rem;
-  min-height: 148px;
-  height: 100%;
-  padding: 1.35rem 1.25rem 1.25rem;
-  background: #fafbfc;
-  border: 1px solid var(--sg-border);
-  border-top: 3px solid var(--sg-navy);
-  border-radius: var(--sg-radius);
-  box-shadow: none;
-}
-
-.elementor-1623 .sg-ceo-card .ha-infobox-title {
-  font-size: 1rem !important;
-}
-
-.elementor-1623 .sg-ceo-card .ha-infobox-text {
-  width: 100%;
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--sg-border);
-}
-
-.elementor-1623 .sg-ceo-card .sg-team-avatar {
-  width: 44px;
-  height: 44px;
-  font-size: 0.8125rem;
-}
-
-/* --------------------------------------------------------------------------
-   Leadership roster — clean white corporate band
-   -------------------------------------------------------------------------- */
-.elementor-1623 .sg-team-leadership-grid {
-  background-color: #ffffff;
-  border-top: 1px solid var(--sg-border);
-  padding-top: 2rem;
-  padding-bottom: 1.25rem;
-}
-
-.elementor-1623 .sg-team-grid-continued {
-  padding-top: 0;
-  padding-bottom: 3.25rem;
-}
-
-.elementor-1623 .sg-team-grid-section {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.elementor-1623 .elementor-element-c685e9b.sg-team-leadership-grid {
-  padding-top: 2.75rem;
-}
-
-.elementor-1623 .elementor-element-c685e9b.sg-team-leadership-grid::before {
-  content: "Leadership team";
-  display: block;
-  max-width: 1200px;
-  margin: 0 auto 1.5rem;
-  padding: 0 20px 0.85rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--sg-muted);
-  border-bottom: 1px solid var(--sg-border);
-}
-
-.elementor-1623 .sg-team-grid-section > .elementor-container {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.25rem;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 20px;
-  padding-right: 20px;
-}
-
-.elementor-1623 .sg-team-grid-section > .elementor-container > .elementor-column {
+.elementor-1623 .sg-ceo-card {
   width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
 }
 
-.elementor-1623 .sg-team-grid-section .elementor-column > .elementor-widget-wrap {
-  background: transparent !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-media-dir-left .elementor-widget-container,
-.elementor-1623 .sg-team-grid-section .ha-infobox .elementor-widget-container {
-  display: block !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-height: 0 !important;
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-figure,
-.elementor-1623 .sg-team-grid-section .ha-infobox-figure--image,
-.elementor-1623 .sg-team-grid-section .ha-infobox-figure img {
+/* Legacy section hooks (continued grid removed) */
+.elementor-1623 .sg-team-grid-section.sg-team-grid-continued {
   display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
 }
 
-.elementor-1623 .sg-team-grid-section .ha-infobox {
-  height: 100%;
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-body {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.85rem;
-  width: 100%;
-  min-height: 148px;
-  height: 100%;
-  padding: 1.35rem 1.25rem 1.25rem;
-  background: #fafbfc;
-  border: 1px solid var(--sg-border);
-  border-top: 3px solid var(--sg-navy);
-  border-radius: var(--sg-radius);
-  box-shadow: none;
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-body:hover {
-  transform: none;
-  background: #ffffff;
-  border-color: rgba(9, 22, 60, 0.18);
-  box-shadow: 0 6px 20px rgba(9, 22, 60, 0.07);
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-title {
-  font-size: 1rem !important;
-  font-weight: 700 !important;
-  line-height: 1.35 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  color: var(--sg-navy) !important;
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-text {
-  width: 100%;
-  margin: 0;
-  padding: 0.75rem 0 0;
-  border-top: 1px solid var(--sg-border);
-  margin-top: auto;
-}
-
-.elementor-1623 .sg-team-grid-section .ha-infobox-text p {
-  margin: 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--sg-muted);
-  letter-spacing: 0.01em;
-}
-
-/* Shared avatar badge */
-.elementor-1623 .sg-team-avatar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(145deg, var(--sg-navy-mid) 0%, var(--sg-navy) 100%);
-  color: #ffffff;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.elementor-1623 .sg-team-grid-section .sg-team-avatar {
-  width: 44px;
-  height: 44px;
-  font-size: 0.8125rem;
-}
-
-/* FAQ section spacing below roster */
 .elementor-1623 .elementor-element-b02f61f {
   margin-top: 0;
   padding-top: 2rem;
@@ -361,12 +468,9 @@
    Responsive
    -------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
-  .elementor-1623 .sg-team-grid-section > .elementor-container {
+  .elementor-1623 .sg-team-level__grid,
+  .elementor-1623 .sg-team-level--executive .sg-team-level__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .elementor-1623 .sg-team-ceo-col > .elementor-widget-wrap {
-    max-width: calc((100% - 1 * 1.25rem) / 2);
   }
 }
 
@@ -400,28 +504,34 @@
     padding: 2.5rem 0 2rem !important;
   }
 
-  .elementor-1623 .sg-team-grid-section > .elementor-container {
-    grid-template-columns: 1fr;
-    gap: 0.875rem;
+  .elementor-1623 .sg-team-leadership-grid > .elementor-container {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .elementor-1623 .sg-team-level__grid,
+  .elementor-1623 .sg-team-level--executive .sg-team-level__grid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
   }
 
   .elementor-1623 .sg-team-ceo-col > .elementor-widget-wrap {
     max-width: 100%;
   }
 
-  .elementor-1623 .elementor-element-c685e9b.sg-team-leadership-grid::before {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
   .elementor-1623 .sg-team-leadership-grid {
     padding-top: 2rem;
-    padding-bottom: 1rem;
+    padding-bottom: 2.5rem;
   }
 
-  .elementor-1623 .sg-team-grid-continued {
-    padding-bottom: 2.5rem;
+  .elementor-1623 .sg-team-org {
+    gap: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elementor-1623 .sg-team-level__grid .ha-infobox-body:hover,
+  .elementor-1623 .sg-ceo-card .ha-infobox-body:hover {
+    transform: none;
   }
 }

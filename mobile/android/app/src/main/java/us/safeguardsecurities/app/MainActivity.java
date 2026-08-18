@@ -1,0 +1,5 @@
+package us.safeguardsecurities.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}

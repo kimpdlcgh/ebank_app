@@ -1,16 +1,283 @@
 {
+  "firestore": [
+    {
+      "database": "(default)",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    },
+    {
+      "database": "safeguardsecurities",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    }
+  ],
   "functions": {
     "source": "functions"
   },
-  "hosting": {
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "functions/**",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "cleanUrls": true,
-    "trailingSlash": false
-  }
+  "hosting": [
+    {
+      "target": "marketing",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "functions/**",
+        "mobile/**",
+        "campaign-admin/**",
+        "backend/ebank_app/**",
+        "scripts/**",
+        "**/.*",
+        "**/node_modules/**",
+        "**/*.ps1",
+        "**/*.py",
+        "**/*.zip",
+        "recipients.csv",
+        "company-details.json"
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "redirects": [
+        {
+          "source": "/login",
+          "destination": "https://app.safeguardsecurities.us/client-login",
+          "type": 301
+        },
+        {
+          "source": "/login.html",
+          "destination": "https://app.safeguardsecurities.us/client-login",
+          "type": 301
+        },
+        {
+          "source": "/signin",
+          "destination": "https://app.safeguardsecurities.us/client-login",
+          "type": 301
+        },
+        {
+          "source": "/register",
+          "destination": "https://app.safeguardsecurities.us/client-login",
+          "type": 301
+        },
+        {
+          "source": "/register.html",
+          "destination": "https://app.safeguardsecurities.us/register",
+          "type": 301
+        },
+        {
+          "source": "/dashboard",
+          "destination": "https://app.safeguardsecurities.us/",
+          "type": 302
+        },
+        {
+          "source": "/dashboard.html",
+          "destination": "https://app.safeguardsecurities.us/",
+          "type": 302
+        },
+        {
+          "source": "/webmail",
+          "destination": "https://mail.safeguardsecurities.us:2096/",
+          "type": 302
+        },
+        {
+          "source": "/webmail/**",
+          "destination": "https://mail.safeguardsecurities.us:2096/",
+          "type": 302
+        },
+        {
+          "source": "/backend/ebank_app/**",
+          "destination": "https://app.safeguardsecurities.us/",
+          "type": 302
+        },
+        {
+          "source": "/admin/login",
+          "destination": "https://app.safeguardsecurities.us/admin-access",
+          "type": 302
+        },
+        {
+          "source": "/admin",
+          "destination": "https://app.safeguardsecurities.us/admin-access",
+          "type": 302
+        },
+        {
+          "source": "/admin.html",
+          "destination": "https://app.safeguardsecurities.us/admin",
+          "type": 302
+        },
+        {
+          "source": "/admin-login.html",
+          "destination": "https://app.safeguardsecurities.us/admin-access",
+          "type": 302
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "/api/send",
+          "function": "sendMarketEmail",
+          "region": "us-central1"
+        }
+      ],
+      "headers": [
+        {
+          "source": "/login.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/signin",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/dashboard",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/admin",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/admin/login",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/admin.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/admin-login.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/dashboard.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "client-portal",
+      "public": ".",
+      "only": [
+        "login.html",
+        "register.html",
+        "dashboard.html",
+        "admin.html",
+        "firebase-init.js",
+        "assets/favicon/**",
+        "assets/site-chrome.css",
+        "assets/site-config.js",
+        "assets/site-footer.js",
+        "assets/elementor-local-fix.js",
+        "wp-content/themes/hello-elementor/style.min-ver=2.5.0.css",
+        "wp-content/uploads/sites/12/2022/02/logo2.png"
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "rewrites": [
+        {
+          "source": "/signin",
+          "destination": "/login.html"
+        },
+        {
+          "source": "/admin",
+          "destination": "/admin.html"
+        },
+        {
+          "source": "/dashboard",
+          "destination": "/dashboard.html"
+        },
+        {
+          "source": "/register",
+          "destination": "/register.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        }
+      ],
+      "redirects": [
+        {"source": "/login", "destination": "/signin", "type": 301}
+      ]
+    },
+    {
+      "target": "app",
+      "public": "backend/ebank_app/dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "cleanUrls": true,
+      "trailingSlash": false,
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "/index.html",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "/assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        }
+      ]
+    }
+  ]
 }

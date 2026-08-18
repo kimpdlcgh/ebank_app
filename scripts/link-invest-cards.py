@@ -7,15 +7,15 @@ INDEX = ROOT / "index.html"
 TEMPLATE = ROOT / "etfs" / "index.html"
 
 CARD_LINKS = {
-    "cc5138e": ("stock/index.html", "Stocks"),
-    "c4f2ba3": ("commodities/index.html", "Commodities"),
-    "17ff583": ("crypto/index.html", "Cryptocurrency"),
-    "2980061": ("mergers-acquisitions/index.html", "Mergers & Acquisitions"),
-    "71e9f8f": ("etfs/index.html", "Indices"),
-    "93b0abd": ("mutual-funds/index.html", "Mutual Funds"),
+    "cc5138e": ("equities/index.html", "Equities"),
+    "c4f2ba3": ("multi-asset/index.html", "Multi-Asset"),
+    "17ff583": ("real-estate/index.html", "Real Estate"),
+    "2980061": ("healthcare/index.html", "Healthcare"),
+    "71e9f8f": ("infrastructure/index.html", "Infrastructure"),
+    "93b0abd": ("top-dividend/index.html", "Top Dividend"),
     "7daef31": ("consumer-discretionary/index.html", "Consumer Discretionary"),
-    "52129b1": ("technology-sector/index.html", "Technology Sector"),
-    "fd412ef": ("energy-infrastructure/index.html", "Energy & Infrastructure"),
+    "52129b1": ("tech-giants/index.html", "Tech Giants"),
+    "fd412ef": ("energy-utilities/index.html", "Energy & Utilities"),
 }
 
 NEW_PAGES = [
