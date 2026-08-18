@@ -1,157 +1,536 @@
-import { SystemConfig } from '../types';
+/**
+ * ClientAccountEmailService
+ * Generates professional HTML emails for client account creation
+ */
 
-export interface ClientAccountEmailVariables {
-  customerName: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  username: string;
-  temporaryPassword: string;
+interface EmailVariables {
+  customerName?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  username?: string;
+  temporaryPassword?: string;
+  tradingAccountId?: string;
   accountNumber?: string;
-  clientPortalUrl: string;
-  supportEmail: string;
-  supportPhone: string;
-  companyName: string;
+  routingNumber?: string;
+  accountType?: string;
+  accountFeatures?: string;
+  accountCreatedDate?: string;
+  clientPortalUrl?: string;
+  supportEmail?: string;
+  supportPhone?: string;
+  companyName?: string;
   adminName?: string;
   adminEmail?: string;
+  [key: string]: any;
 }
 
-export class ClientAccountEmailService {
-  private config: SystemConfig;
+interface EmailPackage {
+  subject: string;
+  html: string;
+  text: string;
+  mailtoUrl: string;
+}
 
-  constructor(config: SystemConfig) {
+interface EmailResponse {
+  clientEmail: EmailPackage;
+  adminNotification?: EmailPackage;
+}
+
+class ClientAccountEmailService {
+  private config: any;
+  private emailTemplate: string;
+
+  constructor(config: any) {
     this.config = config;
+    this.emailTemplate = this.getEmailTemplate();
   }
 
   /**
-   * Generate professional client account creation email
+   * Generate account creation emails for client and admin
    */
-  generateClientWelcomeEmail(variables: ClientAccountEmailVariables): { subject: string; message: string } {
-    const subject = `Welcome to ${variables.companyName} - Your Digital Banking Account is Ready`;
-    
-    const message = `
-Dear ${variables.firstName} ${variables.lastName},
+  generateAccountCreationEmails(
+    variables: EmailVariables,
+    adminEmail?: string
+  ): EmailResponse {
+    try {
+      // Generate client email
+      const clientHtml = this.applySubstitutions(this.emailTemplate, variables);
+      const clientSubject = `Welcome to ${variables.companyName || 'SafeGuard Securities'} — Your Account is Ready`;
+      const clientText = this.htmlToPlainText(clientHtml);
+      const clientMailtoUrl = this.generateMailtoUrl(
+        variables.email || '',
+        clientSubject,
+        clientHtml
+      );
 
-Welcome to ${variables.companyName}! Your digital banking account has been successfully created and is now ready for use.
+      const clientEmail: EmailPackage = {
+        subject: clientSubject,
+        html: clientHtml,
+        text: clientText,
+        mailtoUrl: clientMailtoUrl,
+      };
 
-🏦 ACCOUNT DETAILS
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Customer Name: ${variables.customerName}
-• Email Address: ${variables.email}
-• Username: ${variables.username}
-• Temporary Password: ${variables.temporaryPassword}
-${variables.accountNumber ? `• Account Number: ${variables.accountNumber}` : ''}
+      // Generate optional admin notification
+      let adminNotification: EmailPackage | undefined;
+      if (adminEmail) {
+        const adminHtml = this.generateAdminNotificationHtml(variables);
+        const adminSubject = `New Account Created: ${variables.customerName || 'N/A'}`;
+        const adminText = this.htmlToPlainText(adminHtml);
+        const adminMailtoUrl = this.generateMailtoUrl(
+          adminEmail,
+          adminSubject,
+          adminHtml
+        );
 
-🔐 SECURE ACCESS TO YOUR ACCOUNT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Your exclusive client portal is available at:
-${variables.clientPortalUrl}
+        adminNotification = {
+          subject: adminSubject,
+          html: adminHtml,
+          text: adminText,
+          mailtoUrl: adminMailtoUrl,
+        };
+      }
 
-This portal is secured with 256-bit SSL encryption and is exclusively designed for verified ${variables.companyName} clients.
-
-⚠️ IMPORTANT SECURITY INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Please change your temporary password immediately upon first login
-• Never share your login credentials with anyone
-• Always access your account through the official client portal link provided above
-• Contact us immediately if you suspect any unauthorized access
-
-🎯 GETTING STARTED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Visit the client portal using the link above
-2. Enter your username and temporary password
-3. Follow the prompts to set up your secure password
-4. Complete your profile setup for enhanced security
-5. Begin managing your digital banking services
-
-📞 NEED ASSISTANCE?
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Our dedicated client support team is ready to assist you:
-
-• Email Support: ${variables.supportEmail}
-• Phone Support: ${variables.supportPhone}
-• Business Hours: Monday - Friday, 8:00 AM - 6:00 PM
-
-For immediate assistance or security concerns, please contact us during business hours.
-
-This account was created by our administrative staff to provide you with secure access to ${variables.companyName}'s digital banking platform. All account activities are monitored and secured according to banking industry standards.
-
-Thank you for choosing ${variables.companyName} for your banking needs.
-
-Best regards,
-${variables.companyName} Digital Banking Team
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This is an automated message. Please do not reply directly to this email.
-For support inquiries, please use the contact information provided above.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-
-    return { subject, message };
+      return {
+        clientEmail,
+        adminNotification,
+      };
+    } catch (error) {
+      console.error('Error generating account creation emails:', error);
+      // Return fallback simple email
+      const fallbackSubject = `Welcome to ${variables.companyName || 'SafeGuard Securities'}`;
+      const fallbackHtml = this.generateFallbackHtml(variables);
+      return {
+        clientEmail: {
+          subject: fallbackSubject,
+          html: fallbackHtml,
+          text: this.htmlToPlainText(fallbackHtml),
+          mailtoUrl: this.generateMailtoUrl(
+            variables.email || '',
+            fallbackSubject,
+            fallbackHtml
+          ),
+        },
+      };
+    }
   }
 
   /**
-   * Generate admin notification email for client account creation
+   * Apply variable substitutions to template
    */
-  generateAdminNotificationEmail(variables: ClientAccountEmailVariables): { subject: string; message: string } {
-    const subject = `New Client Account Created - ${variables.customerName}`;
-    
-    const message = `
-Admin Notification: New Client Account Created
+  private applySubstitutions(template: string, variables: EmailVariables): string {
+    let result = template;
 
-Client Details:
-• Name: ${variables.firstName} ${variables.lastName}
-• Email: ${variables.email}
-• Username: ${variables.username}
-• Created: ${new Date().toLocaleString()}
+    // Replace all {{variable}} placeholders
+    Object.entries(variables).forEach(([key, value]) => {
+      const placeholder = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+      const replacement = value == null ? '' : String(value);
+      result = result.replace(placeholder, replacement);
+    });
 
-${variables.adminName ? `Created by: ${variables.adminName} (${variables.adminEmail})` : ''}
+    // Remove any remaining unreplaced variables
+    result = result.replace(/{{[^}]+}}/g, '');
 
-Client portal access has been provided via automated email.
-
-${variables.companyName} Admin System`;
-
-    return { subject, message };
+    return result;
   }
 
   /**
-   * Generate mailto URL for client account creation email
+   * Get the HTML email template
    */
-  generateClientAccountMailtoUrl(variables: ClientAccountEmailVariables): string {
-    const emailContent = this.generateClientWelcomeEmail(variables);
-    
-    const subject = encodeURIComponent(emailContent.subject);
-    const body = encodeURIComponent(emailContent.message);
-    const toEmail = variables.email;
-
-    return `mailto:${toEmail}?subject=${subject}&body=${body}`;
+  private getEmailTemplate(): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{companyName}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+            color: #333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+        .header {
+            background-color: #4A90E2;
+            color: white;
+            padding: 30px 20px;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .header-text {
+            display: flex;
+            flex-direction: column;
+        }
+        .logo-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 0;
+        }
+        .logo-subtitle {
+            font-size: 11px;
+            opacity: 0.9;
+            letter-spacing: 1px;
+            color: white;
+            margin: 3px 0 0 0;
+        }
+        .header-right {
+            text-align: right;
+            font-size: 12px;
+        }
+        .header-link {
+            color: #ffffff;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 3px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #003d82;
+            margin-bottom: 20px;
+        }
+        .intro-text {
+            color: #003d82;
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .account-info-section {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #003d82;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+            font-size: 14px;
+            color: #003d82;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #003d82;
+        }
+        .info-value {
+            color: #003d82;
+            text-align: right;
+            word-break: break-all;
+        }
+        .highlight-box {
+            background-color: #e8f4f8;
+            border: 2px solid #003d82;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-size: 13px;
+            color: #003d82;
+        }
+        .cta-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 14px 40px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .next-steps {
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        .steps-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        .steps-list li {
+            padding: 8px 0 8px 30px;
+            position: relative;
+            font-size: 14px;
+            color: #003d82;
+        }
+        .steps-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #4A90E2;
+        }
+        .security-notice {
+            background-color: #ffe8e8;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #003d82;
+        }
+        .footer {
+            background-color: #f0f0f0;
+            color: #003d82;
+            padding: 30px;
+            text-align: center;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+        }
+        .footer-section {
+            margin-bottom: 15px;
+        }
+        .footer-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #003d82;
+        }
+        .footer-link {
+            color: #003d82;
+            text-decoration: none;
+        }
+        .divider {
+            height: 1px;
+            background-color: #ddd;
+            margin: 15px 0;
+        }
+        .footer-note {
+            font-size: 10px;
+            color: #666;
+            margin-top: 15px;
+        }
+        a {
+            color: #003d82;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="header-left">
+                <div class="header-text">
+                    <p class="logo-title">SAFEGUARD</p>
+                    <p class="logo-subtitle">SECURITIES, INC.</p>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="greeting">Welcome, {{firstName}}!</div>
+            <p class="intro-text">
+                Thank you for opening a trading account with {{companyName}}. Your account has been successfully created and is ready to use. This email contains all the information you need to get started.
+            </p>
+            <div class="account-info-section">
+                <div class="section-title">Account Access Information</div>
+                <div class="info-row">
+                    <span class="info-label">Email Address:</span>
+                    <span class="info-value">{{email}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Username:</span>
+                    <span class="info-value">{{username}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Temporary Password:</span>
+                    <span class="info-value">{{temporaryPassword}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Portal URL:</span>
+                    <span class="info-value"><a href="{{clientPortalUrl}}">Access Portal</a></span>
+                </div>
+            </div>
+            <div class="account-info-section">
+                <div class="section-title">Trading Account Details</div>
+                <div class="info-row">
+                    <span class="info-label">Trading Account ID:</span>
+                    <span class="info-value">{{tradingAccountId}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Account Type:</span>
+                    <span class="info-value">{{accountType}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Account Status:</span>
+                    <span class="info-value" style="color: #27ae60; font-weight: 600;">Active</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Account Creation Date:</span>
+                    <span class="info-value">{{accountCreatedDate}}</span>
+                </div>
+            </div>
+            <div class="cta-section">
+                <a href="{{clientPortalUrl}}" class="cta-button">Login to Your Account</a>
+            </div>
+            <div class="highlight-box">
+                <strong>⚠️ Important Security Notice</strong><br>
+                For your security, you <strong>must change your temporary password</strong> on your first login.
+            </div>
+            <div class="security-notice">
+                <strong>Security Best Practices:</strong><br>
+                • Never share your login credentials with anyone<br>
+                • Use a strong, unique password<br>
+                • Enable two-factor authentication for added security<br>
+                • Be cautious of phishing emails requesting your account information
+            </div>
+        </div>
+        <div class="footer">
+            <div class="footer-section">
+                <div class="footer-title">Contact Information</div>
+                <div style="margin: 8px 0; font-size: 13px;">
+                    <strong>Phone:</strong> <a href="tel:{{supportPhone}}">{{supportPhone}}</a><br>
+                    <strong>Email:</strong> <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="footer-note">
+                © 2026 {{companyName}}. All rights reserved.<br>
+                This is an automated message. Please do not reply to this email.
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
   }
 
   /**
-   * Generate admin notification mailto URL
+   * Generate fallback HTML email for when template fails
    */
-  generateAdminNotificationMailtoUrl(variables: ClientAccountEmailVariables, adminEmail: string): string {
-    const emailContent = this.generateAdminNotificationEmail(variables);
-    
-    const subject = encodeURIComponent(emailContent.subject);
-    const body = encodeURIComponent(emailContent.message);
+  private generateFallbackHtml(variables: EmailVariables): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #003d82;">Welcome to ${variables.companyName || 'SafeGuard Securities'}!</h1>
+        <p>Dear ${variables.firstName} ${variables.lastName},</p>
+        <p>Your trading account has been successfully created. Here are your account details:</p>
 
-    return `mailto:${adminEmail}?subject=${subject}&body=${body}`;
+        <div style="background: #f0f0f0; padding: 15px; margin: 20px 0; border-left: 4px solid #4A90E2;">
+            <p><strong>Login Information:</strong></p>
+            <p>Email: ${variables.email}</p>
+            <p>Username: ${variables.username}</p>
+            <p>Temporary Password: ${variables.temporaryPassword}</p>
+            <p>Portal: ${variables.clientPortalUrl}</p>
+        </div>
+
+        <div style="background: #f0f0f0; padding: 15px; margin: 20px 0; border-left: 4px solid #4A90E2;">
+            <p><strong>Account Details:</strong></p>
+            <p>Account Type: ${variables.accountType}</p>
+            <p>Status: Active</p>
+        </div>
+
+        <p style="color: #e74c3c;"><strong>Important:</strong> You must change your temporary password on your first login for security purposes.</p>
+
+        <p>Need help? Contact our support team:</p>
+        <p>Email: ${variables.supportEmail}<br>Phone: ${variables.supportPhone}</p>
+
+        <p>Best regards,<br>${variables.adminName}<br>${variables.companyName} Support Team</p>
+    </div>
+</body>
+</html>`;
   }
 
   /**
-   * Generate complete email package for client account creation
+   * Generate admin notification HTML
    */
-  generateAccountCreationEmails(variables: ClientAccountEmailVariables, adminEmail?: string) {
-    return {
-      clientEmail: {
-        ...this.generateClientWelcomeEmail(variables),
-        mailtoUrl: this.generateClientAccountMailtoUrl(variables)
-      },
-      adminNotification: adminEmail ? {
-        ...this.generateAdminNotificationEmail(variables),
-        mailtoUrl: this.generateAdminNotificationMailtoUrl(variables, adminEmail)
-      } : null
-    };
+  private generateAdminNotificationHtml(variables: EmailVariables): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #003d82;">New Client Account Created</h1>
+
+        <div style="background: #f0f0f0; padding: 15px; margin: 20px 0; border-left: 4px solid #4A90E2;">
+            <p><strong>Client Information:</strong></p>
+            <p>Name: ${variables.customerName}</p>
+            <p>Email: ${variables.email}</p>
+            <p>Username: ${variables.username}</p>
+            <p>Account Type: ${variables.accountType}</p>
+            <p>Created: ${variables.accountCreatedDate}</p>
+        </div>
+
+        <p>The welcome email has been sent to the client's email address.</p>
+        <p>No action is required at this time.</p>
+    </div>
+</body>
+</html>`;
+  }
+
+  /**
+   * Convert HTML to plain text
+   */
+  private htmlToPlainText(html: string): string {
+    return html
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .trim();
+  }
+
+  /**
+   * Generate mailto URL
+   */
+  private generateMailtoUrl(
+    to: string,
+    subject: string,
+    html: string
+  ): string {
+    if (!to) {
+      console.warn('No email recipient specified');
+      return '';
+    }
+
+    // For HTML content, we encode it as the email body
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(html);
+
+    return `mailto:${to}?subject=${encodedSubject}&body=${encodedBody}`;
   }
 }
 
